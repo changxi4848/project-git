@@ -190,7 +190,12 @@ function renderPdfPage(full, name, loc) {
 /* git：只读 */
 function gitSync({ repo } = {}) {
   const st = store.get();
-  const target = repo || path.join(dataDir, 'demo-repo');
+  const candidates = [
+    repo,
+    'D:\\03_code_list\\esp32s3-relay-dock',
+    path.join(dataDir, 'demo-repo'),
+  ].filter(Boolean);
+  const target = candidates.find((d) => fs.existsSync(path.join(d, '.git'))) || candidates[0];
   if (!fs.existsSync(path.join(target, '.git'))) return { error: '不是 git 仓库：' + target };
   store.pushUndo();
 
@@ -279,7 +284,7 @@ function createWindow() {
         if (process.argv.includes('--drawer')) {
           await new Promise(r => setTimeout(r, 1200));
           try {
-            const r2 = await win.webContents.executeJavaScript('(function(){try{select("n08");return "ok";}catch(e){return "ERR:"+e.message}})()');
+            const r2 = await win.webContents.executeJavaScript('(function(){try{select((ns.find(function(x){return x.n.source&&x.n.source.file})||ns[1]||ns[0]).id);return "ok";}catch(e){return "ERR:"+e.message}})()');
             fs.writeFileSync(path.join(ROOT, 'docs', 'dbg2.txt'), String(r2));
           } catch(e) { fs.writeFileSync(path.join(ROOT, 'docs', 'dbg2.txt'), 'EXE:' + e.message); }
           await new Promise(r => setTimeout(r, 700));
@@ -367,6 +372,14 @@ function registerIpc() {
   ipcMain.handle('search', (e, p) => search(p));
   ipcMain.handle('file:open', (e, p) => openFile(p));
   ipcMain.handle('shell:open', (e, p) => shell.openPath(p));
+  ipcMain.handle('file:openExtern', async (e, p) => {
+    const n = store.nodeById(p.nodeId);
+    if (!n || !n.source || !n.source.file) return { error: '没有关联文件' };
+    const full = path.join(store.filesDir(), n.source.file);
+    if (!fs.existsSync(full)) return { error: '文件不存在：' + full };
+    const err = await shell.openPath(full);
+    return err ? { error: err } : { ok: true, path: full };
+  });
   ipcMain.handle('app:info', () => ({
     version: app.getVersion(), dataDir: store.dataDir(), packaged: app.isPackaged,
   }));

@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('api', {
   gitSync: (p) => ipcRenderer.invoke('git:sync', p || {}),
   search: (p) => ipcRenderer.invoke('search', p),
   openFile: (p) => ipcRenderer.invoke('file:open', p),
+  openFileExtern: (p) => ipcRenderer.invoke('file:openExtern', p),
   openPath: (p) => ipcRenderer.invoke('shell:open', p),
   info: () => ipcRenderer.invoke('app:info'),
   onMenu: (fn) => {
