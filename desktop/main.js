@@ -261,6 +261,7 @@ function createWindow() {
     width: 1440, height: 900, minWidth: 960, minHeight: 640,
     backgroundColor: '#141519',
     title: '项目Git',
+    icon: path.join(__dirname, 'assets', 'icon.png'),
     show: false,
     autoHideMenuBar: false,
     webPreferences: {
@@ -370,6 +371,8 @@ function registerIpc() {
     version: app.getVersion(), dataDir: store.dataDir(), packaged: app.isPackaged,
   }));
 }
+
+try { app.setAppUserModelId('com.projectgit.app'); } catch (e) {}
 
 app.whenReady().then(() => {
   dataDir = resolveDataDir();
