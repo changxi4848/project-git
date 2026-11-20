@@ -314,7 +314,7 @@ function buildMenu() {
               message: '重置会把当前 data/state.json 换成演示数据（原文件备份为 state.bak.json）',
             });
             if (response !== 1) return;
-            const src = path.join(ROOT, 'data', 'state.json');
+            const src = path.join(__dirname, 'seed', 'state.json');
             const dst = path.join(store.dataDir(), 'state.json');
             if (fs.existsSync(dst)) fs.copyFileSync(dst, dst.replace('.json', '.bak.json'));
             if (fs.existsSync(src) && src !== dst) fs.copyFileSync(src, dst);
