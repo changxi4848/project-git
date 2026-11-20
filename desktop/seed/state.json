@@ -1,0 +1,1506 @@
+{
+ "projects": [
+  {
+   "id": "p_pricing",
+   "name": "Q4 定价",
+   "lane": 0,
+   "color": "#1B6E8C",
+   "keywords": [
+    "定价",
+    "报价",
+    "阶梯",
+    "客单价",
+    "A 方案",
+    "B 方案",
+    "灰度",
+    "锚点",
+    "商家",
+    "跨境",
+    "垫资",
+    "回款"
+   ]
+  },
+  {
+   "id": "p_promo",
+   "name": "双十一大促",
+   "lane": 1,
+   "color": "#7A6BB0",
+   "keywords": [
+    "大促",
+    "双十一",
+    "预算",
+    "GMV",
+    "主推",
+    "品类",
+    "返场",
+    "活动",
+    "投产比",
+    "复购"
+   ]
+  },
+  {
+   "id": "p_content",
+   "name": "内容理解",
+   "lane": 2,
+   "color": "#6B8E4E",
+   "keywords": [
+    "口径",
+    "转化率",
+    "埋点",
+    "指标",
+    "标签",
+    "归因",
+    "看板",
+    "双跑",
+    "v2",
+    "长尾"
+   ]
+  },
+  {
+   "id": "p_code",
+   "name": "code · 定价服务",
+   "lane": 3,
+   "color": "#8A99A5",
+   "keywords": [
+    "commit",
+    "merge",
+    "发布",
+    "版本"
+   ]
+  }
+ ],
+ "types": [
+  {
+   "id": "plan",
+   "name": "方案",
+   "color": "#2C6E8F",
+   "icon": "▤",
+   "fields": [
+    {
+     "key": "版本号",
+     "kind": "文本"
+    },
+    {
+     "key": "适用范围",
+     "kind": "文本"
+    }
+   ]
+  },
+  {
+   "id": "decision",
+   "name": "决策",
+   "color": "#B5473F",
+   "icon": "◆",
+   "fields": [
+    {
+     "key": "结论",
+     "kind": "文本",
+     "required": true
+    },
+    {
+     "key": "负责人",
+     "kind": "人员"
+    },
+    {
+     "key": "依据",
+     "kind": "长文本"
+    }
+   ]
+  },
+  {
+   "id": "asset",
+   "name": "资产",
+   "color": "#6B8E4E",
+   "icon": "▦",
+   "fields": [
+    {
+     "key": "链接",
+     "kind": "链接"
+    },
+    {
+     "key": "更新方式",
+     "kind": "文本"
+    }
+   ]
+  },
+  {
+   "id": "retro",
+   "name": "复盘",
+   "color": "#7A6BB0",
+   "icon": "↺",
+   "fields": [
+    {
+     "key": "原以为",
+     "kind": "文本"
+    },
+    {
+     "key": "实际",
+     "kind": "长文本"
+    },
+    {
+     "key": "可复用做法",
+     "kind": "长文本"
+    }
+   ]
+  },
+  {
+   "id": "version",
+   "name": "版本",
+   "color": "#8A99A5",
+   "icon": "⎇",
+   "fields": [
+    {
+     "key": "发布号",
+     "kind": "文本"
+    },
+    {
+     "key": "改动",
+     "kind": "文本"
+    }
+   ]
+  },
+  {
+   "id": "t_6",
+   "name": "实验结果",
+   "color": "#8A99A5",
+   "icon": "◇",
+   "fields": [
+    {
+     "key": "结论",
+     "required": true,
+     "kind": "文本"
+    },
+    {
+     "key": "样本量",
+     "kind": "数字"
+    },
+    {
+     "key": "显著性",
+     "kind": "单选"
+    }
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "id": "n01",
+   "project": "p_pricing",
+   "type": "plan",
+   "title": "定价策略草案 v1",
+   "summary": "按类目阶梯报价，前置付费",
+   "content_at": "2026-08-14",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": "定价A灰度复盘.md",
+    "locator": {
+     "kind": "text",
+     "start": 2,
+     "end": 13
+    },
+    "excerpt": "定价 A 方案灰度复盘"
+   },
+   "extra": {
+    "版本号": "v1",
+    "适用范围": "中国区"
+   },
+   "parent": null
+  },
+  {
+   "id": "n02",
+   "project": "p_pricing",
+   "type": "asset",
+   "title": "竞品价格数据表",
+   "summary": "6 家竞品、32 个类目的价格快照",
+   "content_at": "2026-08-22",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "链接": "bi://pricing/comp",
+    "更新方式": "周更"
+   },
+   "parent": "n01"
+  },
+  {
+   "id": "n03",
+   "project": "p_pricing",
+   "type": "decision",
+   "title": "决定 A 方案进入灰度",
+   "summary": "9 月 12 日评审通过，灰度 5%",
+   "content_at": "2026-09-12",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": "Q4评审纪要.pdf",
+    "locator": {
+     "kind": "pdf",
+     "page": 1,
+     "rect": [
+      60,
+      330,
+      535,
+      400
+     ]
+    },
+    "excerpt": "决定 Q4 起改用 B 方案"
+   },
+   "extra": {
+    "结论": "A 方案进入灰度",
+    "负责人": "张伟",
+    "依据": "竞品数据表"
+   },
+   "parent": "n01"
+  },
+  {
+   "id": "n04",
+   "project": "p_pricing",
+   "type": "plan",
+   "title": "A 方案详设",
+   "summary": "阶梯与锚点规则、算账页",
+   "content_at": "2026-09-15",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "版本号": "v2",
+    "适用范围": "灰度商家"
+   },
+   "parent": "n03"
+  },
+  {
+   "id": "n05",
+   "project": "p_pricing",
+   "type": "retro",
+   "title": "灰度第一周复盘",
+   "summary": "客单价涨 6.2%，咨询量涨 3.1 倍",
+   "content_at": "2026-10-18",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": "定价A灰度复盘.md",
+    "locator": {
+     "kind": "text",
+     "start": 89,
+     "end": 100
+    },
+    "excerpt": "原以为问题出在渠道结构"
+   },
+   "extra": {
+    "原以为": "渠道结构问题",
+    "实际": "价格锚点让商家算不清账"
+   },
+   "parent": "n04"
+  },
+  {
+   "id": "n06",
+   "project": "p_pricing",
+   "type": "decision",
+   "title": "决定延长灰度两周",
+   "summary": "再观察一轮咨询成本",
+   "content_at": "2026-10-02",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "superseded",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "结论": "延长灰度两周",
+    "负责人": "张伟"
+   },
+   "parent": "n05"
+  },
+  {
+   "id": "n07",
+   "project": "p_pricing",
+   "type": "plan",
+   "title": "B 方案提案",
+   "summary": "按成交效果分档，后置补费",
+   "content_at": "2026-10-28",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": "定价B方案提案.md",
+    "locator": {
+     "kind": "text",
+     "start": 21,
+     "end": 35
+    },
+    "excerpt": "不再按“类目 × 阶梯”报价"
+   },
+   "extra": {
+    "版本号": "v1",
+    "适用范围": "全量"
+   },
+   "parent": "n06"
+  },
+  {
+   "id": "n08",
+   "project": "p_pricing",
+   "type": "decision",
+   "title": "决定 Q4 起改用 B 方案",
+   "summary": "评审通过，A 仅保留跨境场景",
+   "content_at": "2026-11-03",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": "Q4评审纪要.pdf",
+    "locator": {
+     "kind": "pdf",
+     "page": 1,
+     "rect": [
+      60,
+      330,
+      535,
+      400
+     ]
+    },
+    "excerpt": "决定 Q4 起改用 B 方案，A 方案仅保留跨境场景"
+   },
+   "extra": {
+    "结论": "Q4 起改用 B 方案",
+    "负责人": "张伟",
+    "依据": "灰度复盘 + 财务额度"
+   },
+   "parent": "n07"
+  },
+  {
+   "id": "n09",
+   "project": "p_pricing",
+   "type": "plan",
+   "title": "B 方案落地计划",
+   "summary": "11-10 配置、11-15 灰度、12-01 全量",
+   "content_at": "2026-11-05",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": "定价B方案提案.md",
+    "locator": {
+     "kind": "text",
+     "start": 194,
+     "end": 233
+    },
+    "excerpt": "11 月 10 日完成配置，11 月 15 日灰度 5%，12 月 1 日全量"
+   },
+   "extra": {
+    "版本号": "v1",
+    "适用范围": "全量"
+   },
+   "parent": "n08"
+  },
+  {
+   "id": "n10",
+   "project": "p_pricing",
+   "type": "asset",
+   "title": "定价实时看板",
+   "summary": "客单价 / 咨询量 / 回款周期",
+   "content_at": "2026-11-06",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "链接": "bi://pricing/live",
+    "更新方式": "实时"
+   },
+   "parent": "n09"
+  },
+  {
+   "id": "n11",
+   "project": "p_pricing",
+   "type": "decision",
+   "title": "决定保留 A 用于跨境",
+   "summary": "跨境类目继续用 A，不回滚",
+   "content_at": "2026-11-12",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "结论": "跨境保留 A 方案",
+    "负责人": "李娜"
+   },
+   "parent": "n08"
+  },
+  {
+   "id": "n12",
+   "project": "p_pricing",
+   "type": "retro",
+   "title": "定价切换风险清单",
+   "summary": "回款周期、垫资、客服话术",
+   "content_at": "2026-11-15",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": "上线检查清单.txt",
+    "locator": {
+     "kind": "text",
+     "start": 31,
+     "end": 50
+    },
+    "excerpt": "回滚脚本已验证，回滚时间小于 3 分钟"
+   },
+   "extra": {
+    "原以为": "切换只要配开关",
+    "实际": "结算侧需要垫资准备"
+   },
+   "parent": "n11"
+  },
+  {
+   "id": "n20",
+   "project": "p_promo",
+   "type": "plan",
+   "title": "大促活动排期",
+   "summary": "10-20 启动，11-11 主推",
+   "content_at": "2026-08-28",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "版本号": "v3",
+    "适用范围": "全站"
+   },
+   "parent": null
+  },
+  {
+   "id": "n21",
+   "project": "p_promo",
+   "type": "plan",
+   "title": "大促素材清单",
+   "summary": "主图 / 短视频 / 直播脚本",
+   "content_at": "2026-09-05",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "版本号": "v1",
+    "适用范围": "主推品类"
+   },
+   "parent": "n20"
+  },
+  {
+   "id": "n22",
+   "project": "p_promo",
+   "type": "decision",
+   "title": "决定追加预算 200 万",
+   "summary": "用于主推品类冲量",
+   "content_at": "2026-09-20",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "结论": "追加 200 万预算",
+    "负责人": "王强",
+    "依据": "历史投产比 3.2"
+   },
+   "parent": "n20"
+  },
+  {
+   "id": "n23",
+   "project": "p_promo",
+   "type": "asset",
+   "title": "大促实时看板",
+   "summary": "GMV / 投产比 / 品类结构",
+   "content_at": "2026-10-01",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "链接": "bi://promo/live",
+    "更新方式": "实时"
+   },
+   "parent": "n22"
+  },
+  {
+   "id": "n24",
+   "project": "p_promo",
+   "type": "decision",
+   "title": "决定主推 A 品类",
+   "summary": "A 品类搜索指数最高",
+   "content_at": "2026-10-08",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "结论": "主推 A 品类",
+    "负责人": "王强"
+   },
+   "parent": "n23"
+  },
+  {
+   "id": "n25",
+   "project": "p_promo",
+   "type": "retro",
+   "title": "大促预演复盘",
+   "summary": "压测通过，库存预警未打通",
+   "content_at": "2026-10-25",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "原以为": "库存系统已对接",
+    "实际": "预警没接"
+   },
+   "parent": "n24"
+  },
+  {
+   "id": "n26",
+   "project": "p_promo",
+   "type": "decision",
+   "title": "决定提前 2 天开启",
+   "summary": "抢竞对窗口",
+   "content_at": "2026-10-30",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "结论": "提前 2 天开启",
+    "负责人": "王强"
+   },
+   "parent": "n25"
+  },
+  {
+   "id": "n27",
+   "project": "p_promo",
+   "type": "retro",
+   "title": "大促复盘",
+   "summary": "GMV 108%，利润仅 91%",
+   "content_at": "2026-11-08",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": "双十一大促复盘.md",
+    "locator": {
+     "kind": "text",
+     "start": 58,
+     "end": 99
+    },
+    "excerpt": "原以为追加 200 万预算能带来同比例增量，实际边际投产比从 3.2 掉到 1.9"
+   },
+   "extra": {
+    "原以为": "预算同比例增量",
+    "实际": "需求已透支，边际投产比 1.9",
+    "可复用做法": "加预算前看品类搜索指数斜率，为负就别加"
+   },
+   "parent": "n26"
+  },
+  {
+   "id": "n28",
+   "project": "p_promo",
+   "type": "plan",
+   "title": "大促返场方案",
+   "summary": "11-20 前确认，避免和复盘冲突",
+   "content_at": "2026-11-12",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": "双十一大促复盘.md",
+    "locator": {
+     "kind": "text",
+     "start": 220,
+     "end": 240
+    },
+    "excerpt": "返场方案需要在 11 月 20 日前确认"
+   },
+   "extra": {
+    "版本号": "v1",
+    "适用范围": "返场"
+   },
+   "parent": "n27"
+  },
+  {
+   "id": "n30",
+   "project": "p_content",
+   "type": "plan",
+   "title": "埋点口径方案",
+   "summary": "曝光 / 下单 / 支付三段埋点",
+   "content_at": "2026-09-05",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "版本号": "v1",
+    "适用范围": "全端"
+   },
+   "parent": null
+  },
+  {
+   "id": "n31",
+   "project": "p_content",
+   "type": "decision",
+   "title": "决定统一转化率口径",
+   "summary": "对外用 A，对内复盘用 B",
+   "content_at": "2026-10-11",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": "指标口径说明.md",
+    "locator": {
+     "kind": "text",
+     "start": 148,
+     "end": 173
+    },
+    "excerpt": "统一为：对外一律使用口径 A，对内复盘使用口径 B"
+   },
+   "extra": {
+    "结论": "对外 A、对内 B",
+    "负责人": "陈默",
+    "依据": "口径说明文档"
+   },
+   "parent": "n30"
+  },
+  {
+   "id": "n32",
+   "project": "p_content",
+   "type": "asset",
+   "title": "口径对照表",
+   "summary": "两个口径的公式与适用场景",
+   "content_at": "2026-10-12",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": "指标口径说明.md",
+    "locator": {
+     "kind": "text",
+     "start": 49,
+     "end": 60
+    },
+    "excerpt": "口径 A（下单转化率）"
+   },
+   "extra": {
+    "链接": "bi://metric/map",
+    "更新方式": "按需"
+   },
+   "parent": "n31"
+  },
+  {
+   "id": "n33",
+   "project": "p_content",
+   "type": "retro",
+   "title": "指标掉点归因",
+   "summary": "不是渠道，是埋点重复上报",
+   "content_at": "2026-10-22",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "原以为": "渠道质量下降",
+    "实际": "埋点重复上报导致分母虚高"
+   },
+   "parent": "n31"
+  },
+  {
+   "id": "n34",
+   "project": "p_content",
+   "type": "decision",
+   "title": "决定暂停旧口径统计",
+   "summary": "10-28 起停用旧口径",
+   "content_at": "2026-10-28",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": "指标口径说明.md",
+    "locator": {
+     "kind": "text",
+     "start": 191,
+     "end": 210
+    },
+    "excerpt": "旧口径统计已于 10 月 28 日暂停"
+   },
+   "extra": {
+    "结论": "暂停旧口径",
+    "负责人": "陈默"
+   },
+   "parent": "n33"
+  },
+  {
+   "id": "n35",
+   "project": "p_content",
+   "type": "plan",
+   "title": "内容标签体系 v2",
+   "summary": "从 12 个粗标签到 86 个细标签",
+   "content_at": "2026-11-02",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "版本号": "v2",
+    "适用范围": "全量内容"
+   },
+   "parent": "n30"
+  },
+  {
+   "id": "n36",
+   "project": "p_content",
+   "type": "decision",
+   "title": "决定采用标签体系 v2",
+   "summary": "迁移期两周，双跑对齐",
+   "content_at": "2026-11-10",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "结论": "采用 v2，双跑两周",
+    "负责人": "陈默"
+   },
+   "parent": "n35"
+  },
+  {
+   "id": "n37",
+   "project": "p_content",
+   "type": "asset",
+   "title": "标签覆盖率看板",
+   "summary": "覆盖率 / 冲突率",
+   "content_at": "2026-11-14",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "链接": "bi://content/tags",
+    "更新方式": "日更"
+   },
+   "parent": "n36"
+  },
+  {
+   "id": "n38",
+   "project": "p_content",
+   "type": "retro",
+   "title": "标签迁移复盘",
+   "summary": "覆盖率 92%，但长尾内容仍缺标签",
+   "content_at": "2026-11-18",
+   "ingest_at": "2026-11-20T09:00",
+   "status": "active",
+   "confidence": 0.92,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "原以为": "两周能全量对齐",
+    "实际": "长尾 8% 需要人工补"
+   },
+   "parent": "n37"
+  },
+  {
+   "id": "n_31",
+   "project": "p_promo",
+   "type": "decision",
+   "title": "大促返场预算按 80 万走，别再加了",
+   "summary": "大促返场预算按 80 万走，别再加了",
+   "content_at": "2026-11-19",
+   "ingest_at": "2026-11-20T23:39",
+   "status": "active",
+   "confidence": 0.877,
+   "auto": true,
+   "placement": "grow",
+   "source": {
+    "file": null,
+    "locator": null,
+    "excerpt": "大促返场预算按 80 万走，别再加了"
+   },
+   "extra": {
+    "结论": "大促返场预算按 80 万走，别再加了",
+    "负责人": "赵六"
+   },
+   "parent": "n28"
+  },
+  {
+   "id": "g_e541afe",
+   "project": "p_code",
+   "type": "version",
+   "title": "合并结算垫资能力",
+   "summary": "2 个文件变更",
+   "content_at": "2026-11-13",
+   "ingest_at": "2026-11-20T23:39",
+   "status": "active",
+   "confidence": 1.0,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": null,
+    "locator": null,
+    "excerpt": "合并结算垫资能力"
+   },
+   "extra": {
+    "发布号": "e541afe",
+    "改动": "2 个文件变更"
+   },
+   "parent": "g_a0df893",
+   "_parents": [
+    "a0df8934c8cc1ae67811bbeef8058ac980ad7b03",
+    "4389e826e404acbccf6698138dbc31b13b9edd54"
+   ]
+  },
+  {
+   "id": "g_4389e82",
+   "project": "p_code",
+   "type": "version",
+   "title": "垫资额度接口联调",
+   "summary": "1 个文件变更",
+   "content_at": "2026-11-12",
+   "ingest_at": "2026-11-20T23:39",
+   "status": "active",
+   "confidence": 1.0,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": null,
+    "locator": null,
+    "excerpt": "垫资额度接口联调"
+   },
+   "extra": {
+    "发布号": "4389e82",
+    "改动": "1 个文件变更"
+   },
+   "parent": "g_bafe3ba",
+   "_parents": [
+    "bafe3ba5810f227a1ae45566e98e83282656078b"
+   ]
+  },
+  {
+   "id": "g_bafe3ba",
+   "project": "p_code",
+   "type": "version",
+   "title": "垫资风控校验",
+   "summary": "1 个文件变更",
+   "content_at": "2026-11-11",
+   "ingest_at": "2026-11-20T23:39",
+   "status": "active",
+   "confidence": 1.0,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": null,
+    "locator": null,
+    "excerpt": "垫资风控校验"
+   },
+   "extra": {
+    "发布号": "bafe3ba",
+    "改动": "1 个文件变更"
+   },
+   "parent": "g_a0df893",
+   "_parents": [
+    "a0df8934c8cc1ae67811bbeef8058ac980ad7b03"
+   ]
+  },
+  {
+   "id": "g_a0df893",
+   "project": "p_code",
+   "type": "version",
+   "title": "B 方案配置化",
+   "summary": "1 个文件变更",
+   "content_at": "2026-11-10",
+   "ingest_at": "2026-11-20T23:39",
+   "status": "active",
+   "confidence": 1.0,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": null,
+    "locator": null,
+    "excerpt": "B 方案配置化"
+   },
+   "extra": {
+    "发布号": "a0df893",
+    "改动": "1 个文件变更"
+   },
+   "parent": "g_2805b8d",
+   "_parents": [
+    "2805b8d1a4b64e5014eae94c5a0061bc8567024c"
+   ]
+  },
+  {
+   "id": "g_2805b8d",
+   "project": "p_code",
+   "type": "version",
+   "title": "结算垫资接口",
+   "summary": "1 个文件变更",
+   "content_at": "2026-11-06",
+   "ingest_at": "2026-11-20T23:39",
+   "status": "active",
+   "confidence": 1.0,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": null,
+    "locator": null,
+    "excerpt": "结算垫资接口"
+   },
+   "extra": {
+    "发布号": "2805b8d",
+    "改动": "1 个文件变更"
+   },
+   "parent": "g_e1dc74b",
+   "_parents": [
+    "e1dc74b5fd83f36a6ffb900d8e9fd076e8839dc4"
+   ]
+  },
+  {
+   "id": "g_e1dc74b",
+   "project": "p_code",
+   "type": "version",
+   "title": "B 方案：按效果分档",
+   "summary": "1 个文件变更",
+   "content_at": "2026-11-04",
+   "ingest_at": "2026-11-20T23:39",
+   "status": "active",
+   "confidence": 1.0,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": null,
+    "locator": null,
+    "excerpt": "B 方案：按效果分档"
+   },
+   "extra": {
+    "发布号": "e1dc74b",
+    "改动": "1 个文件变更"
+   },
+   "parent": "g_5f9fa0a",
+   "_parents": [
+    "5f9fa0ac0f6e5b76ae322b4dc8a34fe76b29d5cd"
+   ]
+  },
+  {
+   "id": "g_5f9fa0a",
+   "project": "p_code",
+   "type": "version",
+   "title": "灰度数据导出任务",
+   "summary": "1 个文件变更",
+   "content_at": "2026-10-20",
+   "ingest_at": "2026-11-20T23:39",
+   "status": "active",
+   "confidence": 1.0,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": null,
+    "locator": null,
+    "excerpt": "灰度数据导出任务"
+   },
+   "extra": {
+    "发布号": "5f9fa0a",
+    "改动": "1 个文件变更"
+   },
+   "parent": "g_4cc2929",
+   "_parents": [
+    "4cc2929f6b0808da72165e147efb2f53a7e1df8a"
+   ]
+  },
+  {
+   "id": "g_4cc2929",
+   "project": "p_code",
+   "type": "version",
+   "title": "修投诉：阶梯边界四舍五入",
+   "summary": "1 个文件变更",
+   "content_at": "2026-09-27",
+   "ingest_at": "2026-11-20T23:39",
+   "status": "active",
+   "confidence": 1.0,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": null,
+    "locator": null,
+    "excerpt": "修投诉：阶梯边界四舍五入"
+   },
+   "extra": {
+    "发布号": "4cc2929",
+    "改动": "1 个文件变更"
+   },
+   "parent": "g_19f5f36",
+   "_parents": [
+    "19f5f360b1338056ab1efc69c23600a30daad7ef"
+   ]
+  },
+  {
+   "id": "g_19f5f36",
+   "project": "p_code",
+   "type": "version",
+   "title": "A 方案灰度开关",
+   "summary": "1 个文件变更",
+   "content_at": "2026-09-12",
+   "ingest_at": "2026-11-20T23:39",
+   "status": "active",
+   "confidence": 1.0,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": null,
+    "locator": null,
+    "excerpt": "A 方案灰度开关"
+   },
+   "extra": {
+    "发布号": "19f5f36",
+    "改动": "1 个文件变更"
+   },
+   "parent": "g_3cb20e1",
+   "_parents": [
+    "3cb20e1435f25773f2ef66959f73e3e5a48eadc7"
+   ]
+  },
+  {
+   "id": "g_3cb20e1",
+   "project": "p_code",
+   "type": "version",
+   "title": "接入商家伙算账页",
+   "summary": "1 个文件变更",
+   "content_at": "2026-08-29",
+   "ingest_at": "2026-11-20T23:39",
+   "status": "active",
+   "confidence": 1.0,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": null,
+    "locator": null,
+    "excerpt": "接入商家伙算账页"
+   },
+   "extra": {
+    "发布号": "3cb20e1",
+    "改动": "1 个文件变更"
+   },
+   "parent": "g_9ba8d40",
+   "_parents": [
+    "9ba8d40e987664a2a963996278f3cef336e383c5"
+   ]
+  },
+  {
+   "id": "g_9ba8d40",
+   "project": "p_code",
+   "type": "version",
+   "title": "定价 A 方案：类目阶梯配置",
+   "summary": "1 个文件变更",
+   "content_at": "2026-08-15",
+   "ingest_at": "2026-11-20T23:39",
+   "status": "active",
+   "confidence": 1.0,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": null,
+    "locator": null,
+    "excerpt": "定价 A 方案：类目阶梯配置"
+   },
+   "extra": {
+    "发布号": "9ba8d40",
+    "改动": "1 个文件变更"
+   },
+   "parent": "g_3214449",
+   "_parents": [
+    "32144495897fa22569cc3b334787328aae7aa386"
+   ]
+  },
+  {
+   "id": "g_3214449",
+   "project": "p_code",
+   "type": "version",
+   "title": "初始化定价服务骨架",
+   "summary": "1 个文件变更",
+   "content_at": "2026-08-12",
+   "ingest_at": "2026-11-20T23:39",
+   "status": "active",
+   "confidence": 1.0,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": null,
+    "locator": null,
+    "excerpt": "初始化定价服务骨架"
+   },
+   "extra": {
+    "发布号": "3214449",
+    "改动": "1 个文件变更"
+   },
+   "parent": null,
+   "_parents": []
+  },
+  {
+   "id": "tag_v1.2",
+   "project": "p_code",
+   "type": "version",
+   "title": "tag v1.2",
+   "summary": "发布里程碑",
+   "content_at": "2026-11-20",
+   "ingest_at": "2026-11-20T23:39",
+   "status": "active",
+   "confidence": 1.0,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": null,
+    "locator": null,
+    "excerpt": "tag v1.2"
+   },
+   "extra": {
+    "发布号": "v1.2",
+    "改动": "发布"
+   },
+   "parent": null
+  }
+ ],
+ "edges": [
+  {
+   "from": "n02",
+   "to": "n01",
+   "kind": "derived"
+  },
+  {
+   "from": "n03",
+   "to": "n01",
+   "kind": "derived"
+  },
+  {
+   "from": "n04",
+   "to": "n03",
+   "kind": "derived"
+  },
+  {
+   "from": "n05",
+   "to": "n04",
+   "kind": "derived"
+  },
+  {
+   "from": "n06",
+   "to": "n05",
+   "kind": "derived"
+  },
+  {
+   "from": "n07",
+   "to": "n06",
+   "kind": "derived"
+  },
+  {
+   "from": "n08",
+   "to": "n07",
+   "kind": "derived"
+  },
+  {
+   "from": "n09",
+   "to": "n08",
+   "kind": "derived"
+  },
+  {
+   "from": "n10",
+   "to": "n09",
+   "kind": "derived"
+  },
+  {
+   "from": "n11",
+   "to": "n08",
+   "kind": "derived"
+  },
+  {
+   "from": "n12",
+   "to": "n11",
+   "kind": "derived"
+  },
+  {
+   "from": "n21",
+   "to": "n20",
+   "kind": "derived"
+  },
+  {
+   "from": "n22",
+   "to": "n20",
+   "kind": "derived"
+  },
+  {
+   "from": "n23",
+   "to": "n22",
+   "kind": "derived"
+  },
+  {
+   "from": "n24",
+   "to": "n23",
+   "kind": "derived"
+  },
+  {
+   "from": "n25",
+   "to": "n24",
+   "kind": "derived"
+  },
+  {
+   "from": "n26",
+   "to": "n25",
+   "kind": "derived"
+  },
+  {
+   "from": "n27",
+   "to": "n26",
+   "kind": "derived"
+  },
+  {
+   "from": "n28",
+   "to": "n27",
+   "kind": "derived"
+  },
+  {
+   "from": "n31",
+   "to": "n30",
+   "kind": "derived"
+  },
+  {
+   "from": "n32",
+   "to": "n31",
+   "kind": "derived"
+  },
+  {
+   "from": "n33",
+   "to": "n31",
+   "kind": "derived"
+  },
+  {
+   "from": "n34",
+   "to": "n33",
+   "kind": "derived"
+  },
+  {
+   "from": "n35",
+   "to": "n30",
+   "kind": "derived"
+  },
+  {
+   "from": "n36",
+   "to": "n35",
+   "kind": "derived"
+  },
+  {
+   "from": "n37",
+   "to": "n36",
+   "kind": "derived"
+  },
+  {
+   "from": "n38",
+   "to": "n37",
+   "kind": "derived"
+  },
+  {
+   "from": "n08",
+   "to": "n06",
+   "kind": "supersedes"
+  },
+  {
+   "from": "n34",
+   "to": "n31",
+   "kind": "relates"
+  },
+  {
+   "from": "n27",
+   "to": "n08",
+   "kind": "relates"
+  },
+  {
+   "from": "n05",
+   "to": "n27",
+   "kind": "relates"
+  },
+  {
+   "from": "n_31",
+   "to": "n28",
+   "kind": "derived"
+  },
+  {
+   "from": "g_e541afe",
+   "to": "g_a0df893",
+   "kind": "derived"
+  },
+  {
+   "from": "g_e541afe",
+   "to": "g_4389e82",
+   "kind": "derived"
+  },
+  {
+   "from": "g_4389e82",
+   "to": "g_bafe3ba",
+   "kind": "derived"
+  },
+  {
+   "from": "g_bafe3ba",
+   "to": "g_a0df893",
+   "kind": "derived"
+  },
+  {
+   "from": "g_a0df893",
+   "to": "g_2805b8d",
+   "kind": "derived"
+  },
+  {
+   "from": "g_2805b8d",
+   "to": "g_e1dc74b",
+   "kind": "derived"
+  },
+  {
+   "from": "g_e1dc74b",
+   "to": "g_5f9fa0a",
+   "kind": "derived"
+  },
+  {
+   "from": "g_5f9fa0a",
+   "to": "g_4cc2929",
+   "kind": "derived"
+  },
+  {
+   "from": "g_4cc2929",
+   "to": "g_19f5f36",
+   "kind": "derived"
+  },
+  {
+   "from": "g_19f5f36",
+   "to": "g_3cb20e1",
+   "kind": "derived"
+  },
+  {
+   "from": "g_3cb20e1",
+   "to": "g_9ba8d40",
+   "kind": "derived"
+  },
+  {
+   "from": "g_9ba8d40",
+   "to": "g_3214449",
+   "kind": "derived"
+  }
+ ],
+ "queue": [
+  {
+   "id": "it_55472",
+   "text": "同意，明天同步给运营",
+   "at": "2026-11-19",
+   "speaker": "李四",
+   "cls": {
+    "type": "decision",
+    "type_confident": true,
+    "project": "p_pricing",
+    "parent": "n11",
+    "candidates": [
+     {
+      "id": "n11",
+      "score": 0.421,
+      "title": "决定保留 A 用于跨境",
+      "project": "p_pricing",
+      "type": "decision"
+     },
+     {
+      "id": "n06",
+      "score": 0.4,
+      "title": "决定延长灰度两周",
+      "project": "p_pricing",
+      "type": "decision"
+     },
+     {
+      "id": "n09",
+      "score": 0.392,
+      "title": "B 方案落地计划",
+      "project": "p_pricing",
+      "type": "plan"
+     }
+    ],
+    "confidence": 0.465,
+    "margin": 0.021,
+    "placement": "grow",
+    "action": "queue"
+   }
+  }
+ ],
+ "choices": [],
+ "edits": [
+  {
+   "op": "retype",
+   "id": "n02",
+   "at": "2026-11-20T23:41",
+   "payload": {
+    "type": "asset",
+    "id": "n02",
+    "op": "retype"
+   }
+  }
+ ],
+ "meta": {
+  "name": "项目Git 演示数据",
+  "version": 1,
+  "git_repo": "D:\\03_code_list\\project-git-项目知识时间轴\\data\\demo-repo",
+  "git_synced": true
+ }
+}

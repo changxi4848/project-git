@@ -1,0 +1,15 @@
+{
+  "name": "project-git",
+  "version": "2.0.0",
+  "description": "项目Git · 团队知识的时间轴（桌面版）",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "shot": "electron . --screenshot"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^45.4.1"
+  }
+}

@@ -1,4 +1,8 @@
-__pycache__/
-*.pyc
+node_modules/
+dist/
+*.log
 data/state.json.tmp
-docs/*.tmp
+data/state.bak.json
+docs/*.log
+docs/debug.json
+docs/dbg2.txt
