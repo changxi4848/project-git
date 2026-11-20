@@ -15,6 +15,7 @@ let sim = null, ns = [], ls = [], hls = [], byId = new Map();
 let canvas, ctx, W = 0, H = 0, dpr = 1;
 const cam = { x: 0, y: 0, k: 1 };
 let curProject = null, mode = 'one', filterType = '';
+let DENS = 1.35;   // 疏密：紧凑 0.85 / 标准 1.1 / 宽松 1.35
 let hovered = null, selected = null, active = null;
 let chainSet = new Set();
 let LROW = { perRow: 6, ROW_H: 130, yBase: 0, rows: 1 };
@@ -129,13 +130,12 @@ function rebuild() {
   hls = allEdges.filter((e) => e.kind === 'uses')
     .map((e) => ({ source: e.from, target: e.to, kind: 'uses' }));
 
-  // —— 主干：分行直线，行内间距按时间拉开（不是等距） ——
+  // —— 1. 主干：分行直线，行内按时间拉开 ——
   const chain = longestChain(vn);
-  const MIN_GAP = 205;              // 相邻主干节点的最小间距
+  const MIN_GAP = Math.round(205 * DENS);
   const perRow = chain.length <= 4 ? chain.length : (chain.length <= 8 ? 4 : 5);
   const rows = Math.ceil(chain.length / perRow);
-  const ROW_H = 245;                // 行距（要能放下标签和第二行）
-  const yBase = -((rows - 1) * ROW_H) / 2;
+  const ROW_H = Math.round(200 * DENS);
   chain.forEach((id, i) => {
     const d = byId.get(id);
     if (!d) return;
@@ -146,29 +146,93 @@ function rebuild() {
     const rowIds = chain.slice(first, first + n);
     const ts = rowIds.map((rid) => msOf(byId.get(rid).n.content_at) || 0);
     const tMin = Math.min(...ts), tSpan = Math.max(1, Math.max(...ts) - tMin);
-    const extra = 130;
-    const xs = ts.map((t, k) => k * MIN_GAP + ((t - tMin) / tSpan) * extra);
+    const xs = ts.map((t, k) => k * MIN_GAP + ((t - tMin) / tSpan) * 120);
     const width = xs[xs.length - 1] || 0;
     let x = xs[col] - width / 2;
-    if (row % 2 === 1) x = -x;                        // 蛇形
-    d.fx = x;
-    d.fy = yBase + row * ROW_H;
-    d.main = true;
-    d.row = row;
+    if (row % 2 === 1) x = -x;
+    d.x = x; d.y = row * ROW_H; d.main = true; d.depth = 0;
   });
   chainSet = new Set(chain);
-  LROW = { perRow, ROW_H, yBase, rows };
+  const chainBottom = (rows - 1) * ROW_H;
 
-  if (sim) sim.stop();
-  sim = d3.forceSimulation(ns)
-    .force('link', d3.forceLink(ls).id((d) => d.id).distance(200).strength(0.3))
-    .force('charge', d3.forceManyBody().strength(-1150).distanceMax(1100))
-    .force('collide', d3.forceCollide().radius((d) => (d.r + 52)).iterations(2))
-    .force('y', d3.forceY((d) => (d.main ? d.fy : (d.y >= 0 ? 265 : -265))).strength(0.06))
-    .force('x', d3.forceX((d) => d.fx != null ? d.fx : ((msOf(d.n.content_at) || t0) - t0) / Math.max(1, t1 - t0) * 520 - 260).strength(0.08))
-    .alphaDecay(0.03)
-    .on('tick', draw)
-    .on('end', () => { deoverlap(320); fit(); });
+  // —— 2. 分支：按“离主干几层”分带，带内水平排开 ——
+  const kidsOf = new Map();
+  vn.forEach((n) => {
+    if (n.parent && byId.has(n.parent)) {
+      if (!kidsOf.has(n.parent)) kidsOf.set(n.parent, []);
+      kidsOf.get(n.parent).push(n.id);
+    }
+  });
+  // 深度：父节点是主干 → 1；否则父深度+1
+  const depthOf = new Map();
+  const queue2 = [];
+  chain.forEach((id) => { depthOf.set(id, 0); (kidsOf.get(id) || []).forEach((c) => queue2.push(c)); });
+  while (queue2.length) {
+    const id = queue2.shift();
+    const d = byId.get(id);
+    if (!d || depthOf.has(id)) continue;
+    const p = byId.get(d.n.parent);
+    const dep = (p && depthOf.has(p.id) ? depthOf.get(p.id) : 0) + 1;
+    depthOf.set(id, dep);
+    (kidsOf.get(id) || []).forEach((c) => queue2.push(c));
+  }
+
+  // 每个父节点的子节点：在父节点正下方纵向排开（按时间先后）
+  const baseY = chainBottom + 115;
+  const BAND_H = Math.round(150 * DENS);
+  const byParent = new Map();
+  ns.forEach((d) => {
+    if (d.main) return;
+    const pid = d.n.parent && byId.has(d.n.parent) ? d.n.parent : '__root';
+    if (!byParent.has(pid)) byParent.set(pid, []);
+    byParent.get(pid).push(d);
+  });
+
+  // 深度 1 的父节点先摆，深度 2 的再挂在它们下面
+  const placeChildren = (pid) => {
+    const list = (byParent.get(pid) || [])
+      .sort((a, b) => (a.n.content_at < b.n.content_at ? -1 : 1));
+    const parent = byId.get(pid);
+    const px = parent ? parent.x : 0;
+    const depth = parent ? (parent.main ? 0 : (parent.depth || 0)) + 1 : 1;
+    const y0 = baseY + (depth - 1) * BAND_H;
+    const n = list.length;
+    list.forEach((d, i) => {
+      d.depth = depth;
+      d.x = px + (i - (n - 1) / 2) * Math.round(195 * DENS);   // 在父节点正下方横向铺开
+      d.y = y0;
+      placeChildren(d.id);
+    });
+  };
+  [...byParent.keys()].filter((k) => {
+    const p = byId.get(k);
+    return p && p.main;
+  }).forEach((k) => placeChildren(k));
+  // 没有父节点的孤儿
+  (byParent.get('__root') || []).forEach((d, i) => {
+    d.depth = 1; d.x = (i - 1) * 220; d.y = baseY + i * BAND_H;
+  });
+
+  // 消除同层横向压字：同一 y 上的节点按 x 排序，最小间距 178
+  const rowsMap = new Map();
+  ns.forEach((d) => {
+    if (d.main) return;
+    const key = Math.round(d.y);
+    if (!rowsMap.has(key)) rowsMap.set(key, []);
+    rowsMap.get(key).push(d);
+  });
+  rowsMap.forEach((list) => {
+    list.sort((a, b) => a.x - b.x);
+    let prev = -Infinity;
+    list.forEach((d, i) => { d.x = Math.max(d.x, prev + 210); prev = d.x; d.up = i % 2 === 1; });
+    const minX = list[0].x;
+    const maxX = list[list.length - 1].x;
+    const limL = -900, limR = 900;
+    if (minX < limL) list.forEach((d) => { d.x += limL - minX; });
+    if (maxX > limR) list.forEach((d) => { d.x -= maxX - limR; });
+  });
+
+  if (sim) { sim.stop(); sim = null; }
 
   selected = null; hovered = null; active = null;
   $('#drawer').classList.add('hidden');
@@ -204,9 +268,9 @@ function fit() {
   const xs = ns.map((d) => d.x), ys = ns.map((d) => d.y);
   const pad = 150;
   const minX = Math.min(...xs) - pad, maxX = Math.max(...xs) + pad;
-  const minY = Math.min(...ys) - pad, maxY = Math.max(...ys) + pad;
+  const minY = Math.min(...ys) - pad - 30, maxY = Math.max(...ys) + pad + 56;
   let k = Math.min(cw / (maxX - minX), ch / (maxY - minY));
-  k = clamp(k, 0.55, 1.0);
+  k = clamp(k, 0.4, 1.0);
   cam.k = k;
   cam.x = cw / 2 - ((minX + maxX) / 2) * k;
   cam.y = ch / 2 - ((minY + maxY) / 2) * k;
@@ -470,13 +534,14 @@ function drawNode(d, focus) {
   ctx.restore();
 
   // 标签（图形下方）
-  const show = cam.k > 0.3 || isSel || isHov || (focus && focus.has(n.id));
+  const show = (d.main || cam.k > 0.5 || isSel || isHov || (focus && focus.has(n.id)));
+  const up = d.up;
   if (show) {
     const fs = 12 / cam.k;
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     ctx.font = `${isSel ? 600 : 500} ${fs}px "Microsoft YaHei",sans-serif`;
     const title = n.title.length > 13 ? n.title.slice(0, 13) + '…' : n.title;
-    const ty = d.y + d.r + 12 / cam.k;
+    const ty = up ? (d.y - d.r - 12 / cam.k - fs * 2.1) : (d.y + d.r + 12 / cam.k);
     ctx.fillStyle = abandoned ? '#9aa5b1' : (isSel ? '#111827' : '#374151');
     ctx.fillText(title, d.x, ty);
     ctx.font = `${10.5 / cam.k}px "Microsoft YaHei",sans-serif`;
@@ -568,7 +633,6 @@ function bindCanvas() {
       if (dragInfo.moved) {
         const [wx, wy] = toWorld(sx, sy);
         dragInfo.d.fx = wx; dragInfo.d.fy = wy;
-        if (sim) sim.alpha(0.3).restart();
       }
       draw(); return;
     }
@@ -834,6 +898,14 @@ function bindUI() {
     addFieldRow('结论'); addFieldRow('负责人', '人员');
     $('#modal-type').classList.remove('hidden');
   };
+  document.querySelectorAll('[data-dens]').forEach((b) => {
+    b.onclick = () => {
+      DENS = parseFloat(b.dataset.dens);
+      $('#more-menu').classList.add('hidden');
+      rebuild();
+      toast('疏密：' + (DENS < 1 ? '紧凑' : DENS < 1.2 ? '标准' : '宽松'));
+    };
+  });
   $('#btn-git').onclick = async () => {
     $('#more-menu').classList.add('hidden');
     toast('读取中…');
