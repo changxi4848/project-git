@@ -192,18 +192,24 @@ function rebuild() {
   const placeChildren = (pid) => {
     const list = (byParent.get(pid) || [])
       .sort((a, b) => (a.n.content_at < b.n.content_at ? -1 : 1));
+    if (!list.length) return;
     const parent = byId.get(pid);
     const px = parent ? parent.x : 0;
     const depth = parent ? (parent.main ? 0 : (parent.depth || 0)) + 1 : 1;
     const y0 = baseY + (depth - 1) * BAND_H;
-    const n = list.length;
+    const perRow = 3;
+    const cnt = list.length;
     list.forEach((d, i) => {
+      const row = Math.floor(i / perRow);
+      const c = i % perRow;
+      const k = Math.min(perRow, cnt - row * perRow);
       d.depth = depth;
-      d.x = px + (i - (n - 1) / 2) * Math.round(195 * DENS);   // 在父节点正下方横向铺开
-      d.y = y0;
+      d.x = px + (c - (k - 1) / 2) * Math.round(190 * DENS);
+      d.y = y0 + row * Math.round(155 * DENS);
       placeChildren(d.id);
     });
   };
+
   [...byParent.keys()].filter((k) => {
     const p = byId.get(k);
     return p && p.main;
@@ -268,7 +274,7 @@ function fit() {
   const xs = ns.map((d) => d.x), ys = ns.map((d) => d.y);
   const pad = 150;
   const minX = Math.min(...xs) - pad, maxX = Math.max(...xs) + pad;
-  const minY = Math.min(...ys) - pad - 30, maxY = Math.max(...ys) + pad + 56;
+  const minY = Math.min(...ys) - pad - 40, maxY = Math.max(...ys) + pad + 96;
   let k = Math.min(cw / (maxX - minX), ch / (maxY - minY));
   k = clamp(k, 0.4, 1.0);
   cam.k = k;
@@ -632,7 +638,7 @@ function bindCanvas() {
       }
       if (dragInfo.moved) {
         const [wx, wy] = toWorld(sx, sy);
-        dragInfo.d.fx = wx; dragInfo.d.fy = wy;
+        dragInfo.d.x = wx; dragInfo.d.y = wy;
       }
       draw(); return;
     }
@@ -656,7 +662,7 @@ function bindCanvas() {
   window.addEventListener('mouseup', (e) => {
     if (dragInfo) {
       const { d, moved } = dragInfo;
-      d.fx = null; d.fy = null; dragInfo = null;
+      dragInfo = null;
       canvas.classList.remove('dragging');
       if (moved) {
         const r = canvas.getBoundingClientRect();

@@ -281,6 +281,10 @@ function createWindow() {
     win.show();
     if (SHOT_MODE) {
       setTimeout(async () => {
+        try {
+          const e1 = await win.webContents.executeJavaScript('JSON.stringify({err: window.__err||null, ns: (typeof ns!=="undefined"?ns.length:-1)})');
+          fs.writeFileSync(path.join(ROOT, 'docs', 'err.txt'), e1);
+        } catch (e) {}
         if (process.argv.includes('--relay')) {
           await new Promise(r => setTimeout(r, 800));
           try { await win.webContents.executeJavaScript('curProject="p_relay";rebuild();'); } catch(e) {}
