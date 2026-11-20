@@ -163,7 +163,7 @@ function rebuild() {
   sim = d3.forceSimulation(ns)
     .force('link', d3.forceLink(ls).id((d) => d.id).distance(200).strength(0.3))
     .force('charge', d3.forceManyBody().strength(-1150).distanceMax(1100))
-    .force('collide', d3.forceCollide().radius((d) => (d.r + 44)).iterations(2))
+    .force('collide', d3.forceCollide().radius((d) => (d.r + 52)).iterations(2))
     .force('y', d3.forceY((d) => (d.main ? d.fy : (d.y >= 0 ? 265 : -265))).strength(0.06))
     .force('x', d3.forceX((d) => d.fx != null ? d.fx : ((msOf(d.n.content_at) || t0) - t0) / Math.max(1, t1 - t0) * 520 - 260).strength(0.08))
     .alphaDecay(0.03)
@@ -254,46 +254,10 @@ function draw() {
 
   const focus = active && active.size ? active : null;
 
-  // 主干基线：一条很淡的横线，让“主脉络”一眼可见
-  const mainNodes = ns.filter((d) => d.main);
-  if (mainNodes.length > 1) {
-    const byRow = new Map();
-    mainNodes.forEach((d) => {
-      const r = Math.round(d.fy);
-      if (!byRow.has(r)) byRow.set(r, []);
-      byRow.get(r).push(d);
-    });
-    byRow.forEach((list, y) => {
-      list.sort((a, b) => a.x - b.x);
-      ctx.strokeStyle = 'rgba(120,132,146,0.28)';
-      ctx.lineWidth = 1.6 / cam.k;
-      ctx.beginPath();
-      ctx.moveTo(list[0].x - 26, y);
-      ctx.lineTo(list[list.length - 1].x + 26, y);
-      ctx.stroke();
-    });
-  }
-
   ls.forEach((l) => {
     const a = byId.get(l.source.id || l.source), b = byId.get(l.target.id || l.target);
     if (!a || !b) return;
 
-    // 主干换行处：直角连接
-    if (a.main && b.main && Math.abs(a.fy - b.fy) > 20 && l.kind === 'derived') {
-      const on2 = !focus || (focus.has(a.id) && focus.has(b.id));
-      ctx.globalAlpha = on2 ? 1 : 0.14;
-      ctx.strokeStyle = 'rgba(158,170,183,0.6)';
-      ctx.lineWidth = 1 / cam.k;
-      const yMid = (a.y + b.y) / 2;
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y + a.h / 2);
-      ctx.lineTo(a.x, yMid);
-      ctx.lineTo(b.x, yMid);
-      ctx.lineTo(b.x, b.y - b.h / 2);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-      return;
-    }
     const on = !focus || (focus.has(a.id) && focus.has(b.id));
     const isSup = l.kind === 'supersedes';
     const dead = a.n.status === 'abandoned' || b.n.status === 'abandoned';
@@ -301,7 +265,7 @@ function draw() {
     const RES = ['doc', 'data', 'code', 'output', 'asset'];
     const side = RES.includes(a.n.type) ? a : (RES.includes(b.n.type) ? b : null);
     const owner = side === a ? b : (side === b ? a : null);
-    const isResLink = !!(side && owner && (owner.main || side.main));
+    const isResLink = !!(side && owner && (side.main !== owner.main));
     const p1 = edgePoint(a, b), p2 = edgePoint(b, a);
 
     ctx.globalAlpha = on ? 1 : 0.14;
@@ -342,7 +306,9 @@ function draw() {
   ctx.globalAlpha = 1;
 
   // 隐形引用线：只有聚焦（悬停/选中/拖动）时才显现
-  if (focus) {
+  const focusNode = focus ? S.nodes.find((n) => n.id === (hovered || selected)) : null;
+  const RES_TYPES = ['doc', 'data', 'code', 'output', 'asset'];
+  if (focus && focusNode && RES_TYPES.includes(focusNode.type)) {
     hls.forEach((l) => {
       const a = byId.get(l.source.id || l.source), b = byId.get(l.target.id || l.target);
       if (!a || !b) return;
