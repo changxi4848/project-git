@@ -210,6 +210,14 @@ edges.append({"from": "q9", "to": "r10", "kind": "relates"})    # 样例 ← 中
 edges.append({"from": "q9", "to": "d4", "kind": "relates"})     # 样例 ← 大创
 edges.append({"from": "r5", "to": "r2", "kind": "relates"})     # 固件 ← 交接文档
 
+# 隐形引用：资源被后面的节点用到（不参与力，悬停才显示）
+edges.append({"from": "r5", "to": "r10", "kind": "uses"})   # 固件镜像 → 改 GATT
+edges.append({"from": "r5", "to": "r12", "kind": "uses"})   # 固件镜像 → 冒充 productKey
+edges.append({"from": "r3", "to": "r17", "kind": "uses"})   # 试错记录 → 暂停归档
+edges.append({"from": "t6", "to": "t7", "kind": "uses"})    # 协议文档 → 逆向 LibH
+edges.append({"from": "d5", "to": "d9", "kind": "uses"})    # 弹幕语料 → 检索链路 v2
+edges.append({"from": "d6", "to": "d12", "kind": "uses"})   # 标注集 → 答辩复盘
+
 state = {
     "projects": projects, "types": types,
     "nodes": out_nodes, "edges": edges,

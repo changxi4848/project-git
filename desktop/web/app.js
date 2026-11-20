@@ -11,7 +11,7 @@ const COLOR = { plan: '#3f8fc4', decision: '#d9534f', retro: '#7c6bc4', doc: '#a
 const CARD_W = 172, CARD_H = 64;
 
 let S = { projects: [], types: [], nodes: [], edges: [], queue: [], choices: [], meta: {} };
-let sim = null, ns = [], ls = [], byId = new Map();
+let sim = null, ns = [], ls = [], hls = [], byId = new Map();
 let canvas, ctx, W = 0, H = 0, dpr = 1;
 const cam = { x: 0, y: 0, k: 1 };
 let curProject = null, mode = 'one', filterType = '';
@@ -122,8 +122,12 @@ function rebuild() {
     fx: null, fy: null,
   }));
   byId = new Map(ns.map((d) => [d.id, d]));
-  ls = S.edges.filter((e) => byId.has(e.from) && byId.has(e.to))
+  const allEdges = S.edges.filter((e) => byId.has(e.from) && byId.has(e.to));
+  // uses = 隐形引用线：只画、不参与力
+  ls = allEdges.filter((e) => e.kind !== 'uses')
     .map((e) => ({ source: e.from, target: e.to, kind: e.kind }));
+  hls = allEdges.filter((e) => e.kind === 'uses')
+    .map((e) => ({ source: e.from, target: e.to, kind: 'uses' }));
 
   // —— 主干：分行直线，行内间距按时间拉开（不是等距） ——
   const chain = longestChain(vn);
@@ -336,6 +340,26 @@ function draw() {
     }
   });
   ctx.globalAlpha = 1;
+
+  // 隐形引用线：只有聚焦（悬停/选中/拖动）时才显现
+  if (focus) {
+    hls.forEach((l) => {
+      const a = byId.get(l.source.id || l.source), b = byId.get(l.target.id || l.target);
+      if (!a || !b) return;
+      if (!focus.has(a.id) || !focus.has(b.id)) return;
+      const p1 = edgePoint(a, b), p2 = edgePoint(b, a);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(90,140,170,0.55)';
+      ctx.lineWidth = 1.1 / cam.k;
+      ctx.setLineDash([2 / cam.k, 5 / cam.k]);
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(p2.x, p2.y, 3 / cam.k, 0, 7);
+      ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.strokeStyle = 'rgba(90,140,170,0.75)'; ctx.lineWidth = 1.2 / cam.k; ctx.stroke();
+      ctx.restore();
+    });
+  }
 
   ns.forEach((d) => drawNode(d, focus));
   ctx.restore();
@@ -557,7 +581,7 @@ function bindCanvas() {
 
   canvas.addEventListener('mousedown', (e) => {
     const d = pick(e.offsetX, e.offsetY);
-    if (d) { dragInfo = { d, start: { x: e.offsetX, y: e.offsetY }, moved: false }; return; }
+    if (d) { focusOn(d.id); draw(); dragInfo = { d, start: { x: e.offsetX, y: e.offsetY }, moved: false }; return; }
     panning = { x: e.offsetX - cam.x, y: e.offsetY - cam.y };
     canvas.classList.add('dragging');
     closeDrawer();          // 点空白处收起右侧面板
@@ -709,7 +733,7 @@ function showNode(id) {
     body.appendChild(el('h4', '', '关联'));
     rel.forEach((e) => {
       const other = S.nodes.find((x) => x.id === (e.from === id ? e.to : e.from));
-      const kt = { derived: '属于', supersedes: '取代', relates: '相关', attach: '证据' }[e.kind] || e.kind;
+      const kt = { derived: '属于', supersedes: '取代', relates: '相关', attach: '证据', uses: '被引用' }[e.kind] || e.kind;
       const line = el('div', 'rel', `<span class="k">${kt}</span><span>${other ? other.title : ''}</span>`);
       if (other) line.onclick = () => { select(other.id); const d = byId.get(other.id); if (d) flyTo(d.x, d.y, cam.k); };
       body.appendChild(line);

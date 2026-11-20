@@ -289,7 +289,7 @@ function createWindow() {
         if (process.argv.includes('--drawer')) {
           await new Promise(r => setTimeout(r, 1200));
           try {
-            const r2 = await win.webContents.executeJavaScript('(function(){try{select((ns.find(function(x){return x.n.source&&x.n.source.file})||ns[1]||ns[0]).id);return "ok";}catch(e){return "ERR:"+e.message}})()');
+            const r2 = await win.webContents.executeJavaScript('(function(){try{select((ns.find(function(x){return S.edges.some(function(e){return e.kind==="uses"&&(e.from===x.id||e.to===x.id)})})||ns[0]).id);return "ok";}catch(e){return "ERR:"+e.message}})()');
             fs.writeFileSync(path.join(ROOT, 'docs', 'dbg2.txt'), String(r2));
           } catch(e) { fs.writeFileSync(path.join(ROOT, 'docs', 'dbg2.txt'), 'EXE:' + e.message); }
           await new Promise(r => setTimeout(r, 700));

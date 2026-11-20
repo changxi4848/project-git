@@ -1534,6 +1534,36 @@
    "from": "r5",
    "to": "r2",
    "kind": "relates"
+  },
+  {
+   "from": "r5",
+   "to": "r10",
+   "kind": "uses"
+  },
+  {
+   "from": "r5",
+   "to": "r12",
+   "kind": "uses"
+  },
+  {
+   "from": "r3",
+   "to": "r17",
+   "kind": "uses"
+  },
+  {
+   "from": "t6",
+   "to": "t7",
+   "kind": "uses"
+  },
+  {
+   "from": "d5",
+   "to": "d9",
+   "kind": "uses"
+  },
+  {
+   "from": "d6",
+   "to": "d12",
+   "kind": "uses"
   }
  ],
  "queue": [],
