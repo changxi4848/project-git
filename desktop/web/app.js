@@ -110,9 +110,13 @@ function rebuild() {
   t1 = times.length ? Math.max(...times) : t0 + 1;
 
   const old = new Map(ns.map((d) => [d.id, d]));
+  const degTmp = new Map();
+  S.edges.forEach((e) => { degTmp.set(e.from, (degTmp.get(e.from) || 0) + 1); degTmp.set(e.to, (degTmp.get(e.to) || 0) + 1); });
+  const BASE_R = { decision: 15, output: 14, plan: 12, retro: 11, data: 11, doc: 10, code: 10, asset: 10, version: 10 };
   ns = vn.map((n) => ({
     id: n.id, n,
-    w: CARD_W, h: CARD_H,
+    r: (BASE_R[n.type] || 10) + Math.min(6, Math.sqrt(degTmp.get(n.id) || 0) * 2),
+    w: (BASE_R[n.type] || 10) * 2 + 24, h: (BASE_R[n.type] || 10) * 2 + 20,
     x: (old.get(n.id) ? old.get(n.id).x : (Math.random() - 0.5) * 200),
     y: (old.get(n.id) ? old.get(n.id).y : (Math.random() - 0.5) * 200),
     fx: null, fy: null,
@@ -121,25 +125,31 @@ function rebuild() {
   ls = S.edges.filter((e) => byId.has(e.from) && byId.has(e.to))
     .map((e) => ({ source: e.from, target: e.to, kind: e.kind }));
 
-  // —— 主干：分行的直线（像文字换行），行尾直角连接 ——
+  // —— 主干：分行直线，行内间距按时间拉开（不是等距） ——
   const chain = longestChain(vn);
-  const PITCH = CARD_W + 34;          // 行内间距
-  const ROW_H = CARD_H + 74;          // 行距
-  const perRow = chain.length <= 5 ? chain.length : (chain.length <= 10 ? 5 : 6);
+  const MIN_GAP = 205;              // 相邻主干节点的最小间距
+  const perRow = chain.length <= 4 ? chain.length : (chain.length <= 8 ? 4 : 5);
   const rows = Math.ceil(chain.length / perRow);
+  const ROW_H = 245;                // 行距（要能放下标签和第二行）
   const yBase = -((rows - 1) * ROW_H) / 2;
   chain.forEach((id, i) => {
     const d = byId.get(id);
     if (!d) return;
     const row = Math.floor(i / perRow);
     const col = i % perRow;
-    const dir = row % 2 === 0 ? 1 : -1;                 // 蛇形：奇数行反向
-    const n = Math.min(perRow, chain.length - row * perRow);
-    const x = (col - (n - 1) / 2) * PITCH * dir;
+    const first = row * perRow;
+    const n = Math.min(perRow, chain.length - first);
+    const rowIds = chain.slice(first, first + n);
+    const ts = rowIds.map((rid) => msOf(byId.get(rid).n.content_at) || 0);
+    const tMin = Math.min(...ts), tSpan = Math.max(1, Math.max(...ts) - tMin);
+    const extra = 130;
+    const xs = ts.map((t, k) => k * MIN_GAP + ((t - tMin) / tSpan) * extra);
+    const width = xs[xs.length - 1] || 0;
+    let x = xs[col] - width / 2;
+    if (row % 2 === 1) x = -x;                        // 蛇形
     d.fx = x;
     d.fy = yBase + row * ROW_H;
     d.main = true;
-    d.mainIdx = i;
     d.row = row;
   });
   chainSet = new Set(chain);
@@ -147,10 +157,10 @@ function rebuild() {
 
   if (sim) sim.stop();
   sim = d3.forceSimulation(ns)
-    .force('link', d3.forceLink(ls).id((d) => d.id).distance(150).strength(0.35))
-    .force('charge', d3.forceManyBody().strength(-620).distanceMax(900))
-    .force('collide', d3.forceCollide().radius((d) => (d.main ? 105 : 96)).iterations(2))
-    .force('y', d3.forceY((d) => (d.main ? 0 : (d.y >= 0 ? 210 : -210))).strength(0.06))
+    .force('link', d3.forceLink(ls).id((d) => d.id).distance(200).strength(0.3))
+    .force('charge', d3.forceManyBody().strength(-1150).distanceMax(1100))
+    .force('collide', d3.forceCollide().radius((d) => (d.r + 44)).iterations(2))
+    .force('y', d3.forceY((d) => (d.main ? d.fy : (d.y >= 0 ? 265 : -265))).strength(0.06))
     .force('x', d3.forceX((d) => d.fx != null ? d.fx : ((msOf(d.n.content_at) || t0) - t0) / Math.max(1, t1 - t0) * 520 - 260).strength(0.08))
     .alphaDecay(0.03)
     .on('tick', draw)
@@ -188,11 +198,11 @@ function fit() {
   if (!ns.length) return;
   const cw = canvas.clientWidth || W, ch = canvas.clientHeight || H;
   const xs = ns.map((d) => d.x), ys = ns.map((d) => d.y);
-  const pad = 170;
+  const pad = 150;
   const minX = Math.min(...xs) - pad, maxX = Math.max(...xs) + pad;
   const minY = Math.min(...ys) - pad, maxY = Math.max(...ys) + pad;
   let k = Math.min(cw / (maxX - minX), ch / (maxY - minY));
-  k = clamp(k, 0.3, 1.0);
+  k = clamp(k, 0.55, 1.0);
   cam.k = k;
   cam.x = cw / 2 - ((minX + maxX) / 2) * k;
   cam.y = ch / 2 - ((minY + maxY) / 2) * k;
@@ -221,7 +231,7 @@ function roundRect(c, x, y, w, h, r) {
 function edgePoint(from, to) {
   const dx = to.x - from.x, dy = to.y - from.y;
   const adx = Math.abs(dx), ady = Math.abs(dy);
-  const hw = (from.w || 40) / 2, hh = (from.h || 20) / 2;
+  const hw = (from.r || 12), hh = (from.r || 12);
   let k = 1;
   if (adx * hh > ady * hw) k = hw / (adx || 1);
   else k = hh / (ady || 1);
@@ -242,14 +252,22 @@ function draw() {
 
   // 主干基线：一条很淡的横线，让“主脉络”一眼可见
   const mainNodes = ns.filter((d) => d.main);
-  if (mainNodes.length > 1 && LROW.rows === 1) {
-    const xs = mainNodes.map((d) => d.x);
-    ctx.strokeStyle = 'rgba(120,132,146,0.22)';
-    ctx.lineWidth = 1.4 / cam.k;
-    ctx.beginPath();
-    ctx.moveTo(Math.min(...xs) - CARD_W / 2, 0);
-    ctx.lineTo(Math.max(...xs) + CARD_W / 2, 0);
-    ctx.stroke();
+  if (mainNodes.length > 1) {
+    const byRow = new Map();
+    mainNodes.forEach((d) => {
+      const r = Math.round(d.fy);
+      if (!byRow.has(r)) byRow.set(r, []);
+      byRow.get(r).push(d);
+    });
+    byRow.forEach((list, y) => {
+      list.sort((a, b) => a.x - b.x);
+      ctx.strokeStyle = 'rgba(120,132,146,0.28)';
+      ctx.lineWidth = 1.6 / cam.k;
+      ctx.beginPath();
+      ctx.moveTo(list[0].x - 26, y);
+      ctx.lineTo(list[list.length - 1].x + 26, y);
+      ctx.stroke();
+    });
   }
 
   ls.forEach((l) => {
@@ -275,11 +293,18 @@ function draw() {
     const on = !focus || (focus.has(a.id) && focus.has(b.id));
     const isSup = l.kind === 'supersedes';
     const dead = a.n.status === 'abandoned' || b.n.status === 'abandoned';
+    // 资源附庸：文档/数据/代码/产出 挂到主干上
+    const RES = ['doc', 'data', 'code', 'output', 'asset'];
+    const side = RES.includes(a.n.type) ? a : (RES.includes(b.n.type) ? b : null);
+    const owner = side === a ? b : (side === b ? a : null);
+    const isResLink = !!(side && owner && (owner.main || side.main));
     const p1 = edgePoint(a, b), p2 = edgePoint(b, a);
 
     ctx.globalAlpha = on ? 1 : 0.14;
-    ctx.strokeStyle = isSup ? 'rgba(217,83,79,0.7)' : (dead ? 'rgba(178,186,196,0.6)' : 'rgba(158,170,183,0.55)');
-    ctx.lineWidth = (isSup ? 1.8 : 1) / cam.k;
+    if (isSup) { ctx.strokeStyle = 'rgba(217,83,79,0.75)'; ctx.lineWidth = 1.9 / cam.k; }
+    else if (isResLink) { ctx.strokeStyle = 'rgba(150,160,172,0.75)'; ctx.lineWidth = 1.1 / cam.k; }
+    else if (dead) { ctx.strokeStyle = 'rgba(178,186,196,0.6)'; ctx.lineWidth = 1 / cam.k; }
+    else { ctx.strokeStyle = 'rgba(120,134,150,0.7)'; ctx.lineWidth = 1.5 / cam.k; }
 
     if (dead) {
       const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
@@ -296,7 +321,7 @@ function draw() {
       ctx.moveTo(mx + s2, my - s2); ctx.lineTo(mx - s2, my + s2);
       ctx.stroke();
     } else {
-      ctx.setLineDash(l.kind === 'relates' || l.kind === 'attach' ? [4 / cam.k, 4 / cam.k] : []);
+      ctx.setLineDash((l.kind === 'relates' || l.kind === 'attach' || isResLink) ? [5 / cam.k, 4 / cam.k] : []);
       ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
       ctx.setLineDash([]);
       if (isSup) {
@@ -366,6 +391,49 @@ const FILL = {
   data: '#f1faf8', code: '#f6f8fb', output: '#fffaf0', asset: '#f6fbf4', version: '#f7f8f9',
 };
 
+/* 七类节点，七种形状；标签在图形下方 */
+function shapePath(type, r) {
+  ctx.beginPath();
+  if (type === 'decision') {                    // 六边形
+    for (let i = 0; i < 6; i++) {
+      const a = Math.PI / 3 * i - Math.PI / 6;
+      const x = Math.cos(a) * r, y = Math.sin(a) * r;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.closePath();
+  } else if (type === 'retro') {                // 方形（圆角）
+    roundRect(ctx, -r * 0.92, -r * 0.92, r * 1.84, r * 1.84, r * 0.28);
+  } else if (type === 'doc') {                  // 折角纸
+    const c = r * 0.7;
+    ctx.moveTo(-r, -r);
+    ctx.lineTo(r - c, -r);
+    ctx.lineTo(r, -r + c);
+    ctx.lineTo(r, r);
+    ctx.lineTo(-r, r);
+    ctx.closePath();
+  } else if (type === 'data') {                 // 胶囊
+    const h = r * 1.5, w = r * 2.4;
+    roundRect(ctx, -w / 2, -h / 2, w, h, h / 2);
+  } else if (type === 'code') {                 // 标签
+    ctx.moveTo(-r, -r * 0.8);
+    ctx.lineTo(r * 0.55, -r * 0.8);
+    ctx.lineTo(r, 0);
+    ctx.lineTo(r * 0.55, r * 0.8);
+    ctx.lineTo(-r, r * 0.8);
+    ctx.closePath();
+  } else if (type === 'output') {               // 五角星
+    for (let i = 0; i < 10; i++) {
+      const a = Math.PI / 5 * i - Math.PI / 2;
+      const rr = i % 2 === 0 ? r * 1.15 : r * 0.5;
+      const x = Math.cos(a) * rr, y = Math.sin(a) * rr;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.closePath();
+  } else {                                      // 方案：圆
+    ctx.arc(0, 0, r, 0, 7);
+  }
+}
+
 function drawNode(d, focus) {
   const n = d.n;
   const on = !focus || focus.has(n.id);
@@ -373,63 +441,61 @@ function drawNode(d, focus) {
   const sup = n.status === 'superseded';
   const col = abandoned || sup ? '#b9c2cb' : (COLOR[n.type] || '#8a97a5');
   const isSel = selected === n.id, isHov = hovered === n.id;
-  const x = d.x - d.w / 2, y = d.y - d.h / 2;
 
   ctx.globalAlpha = on ? 1 : 0.16;
+  ctx.save();
+  ctx.translate(d.x, d.y);
 
   if (isSel || isHov) {
     ctx.save();
-    ctx.shadowColor = 'rgba(17,24,39,.18)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 5;
-    nodePath(n.type, x, y, d.w, d.h);
+    ctx.shadowColor = 'rgba(17,24,39,.22)'; ctx.shadowBlur = 18;
+    shapePath(n.type, d.r + 3);
     ctx.fillStyle = '#fff'; ctx.fill();
     ctx.restore();
   }
 
-  nodePath(n.type, x, y, d.w, d.h);
-  ctx.fillStyle = abandoned ? '#f7f8f9' : (FILL[n.type] || '#fff');
+  shapePath(n.type, d.r);
+  ctx.fillStyle = abandoned ? '#f2f4f6' : (FILL[n.type] || '#fff');
   ctx.fill();
-  ctx.lineWidth = (isSel || isHov ? 2 : 1.3) / cam.k;
+  ctx.lineWidth = (isSel || isHov ? 2.4 : 1.6) / cam.k;
   ctx.strokeStyle = col;
   if (abandoned) ctx.setLineDash([5 / cam.k, 4 / cam.k]);
   ctx.stroke();
   ctx.setLineDash([]);
 
-  if (n.type === 'output') {   // 产出：双框
-    const pad = 3.5;
-    nodePath(n.type, x + pad, y + pad, d.w - pad * 2, d.h - pad * 2);
+  // 产出：双边框
+  if (n.type === 'output') {
+    shapePath(n.type, d.r + 3.5);
     ctx.lineWidth = 1 / cam.k;
-    ctx.strokeStyle = col + '66';
+    ctx.strokeStyle = col + '88';
     ctx.stroke();
   }
 
-  const leftInset = n.type === 'decision' ? 26 : (n.type === 'data' ? 22 : 13);
-  const innerW = d.w - leftInset - 14;
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-
-  ctx.fillStyle = abandoned ? '#9aa5b1' : (n.type === 'decision' ? '#a33b36' : '#111827');
-  ctx.font = `600 ${n.type === 'decision' ? 12.5 : 12}px "Microsoft YaHei",sans-serif`;
-  ctx.fillText(truncate(ctx, n.title, innerW), x + leftInset, y + 9);
-
-  const key = keyLine(n);
-  if (key) {
-    ctx.fillStyle = abandoned ? '#a9b2bc' : '#5b6673';
-    ctx.font = '10.5px "Microsoft YaHei",sans-serif';
-    ctx.fillText(truncate(ctx, key, innerW + 8), x + leftInset, y + 28);
+  // 放弃标记：一道斜杠
+  if (abandoned) {
+    ctx.strokeStyle = col; ctx.lineWidth = 1.6 / cam.k;
+    const k = d.r * 0.7;
+    ctx.beginPath(); ctx.moveTo(-k, k); ctx.lineTo(k, -k); ctx.stroke();
   }
+  ctx.restore();
 
-  ctx.fillStyle = '#9aa5b1';
-  ctx.font = '9.5px "Microsoft YaHei",sans-serif';
-  ctx.fillText(`${typeOf(n.type).name} · ${n.content_at}`, x + leftInset, y + d.h - 16);
-
-  if (abandoned || sup) {
-    const tag = abandoned ? '已放弃' : '已取代';
-    ctx.fillStyle = abandoned ? '#eef1f4' : '#fdf0ef';
-    roundRect(ctx, x + d.w - 56, y + d.h - 20, 46, 14, 4); ctx.fill();
-    ctx.fillStyle = abandoned ? '#8794a1' : '#c06a63';
-    ctx.font = '9px "Microsoft YaHei",sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(tag, x + d.w - 33, y + d.h - 18);
-    ctx.textAlign = 'left';
+  // 标签（图形下方）
+  const show = cam.k > 0.3 || isSel || isHov || (focus && focus.has(n.id));
+  if (show) {
+    const fs = 12 / cam.k;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.font = `${isSel ? 600 : 500} ${fs}px "Microsoft YaHei",sans-serif`;
+    const title = n.title.length > 13 ? n.title.slice(0, 13) + '…' : n.title;
+    const ty = d.y + d.r + 12 / cam.k;
+    ctx.fillStyle = abandoned ? '#9aa5b1' : (isSel ? '#111827' : '#374151');
+    ctx.fillText(title, d.x, ty);
+    ctx.font = `${10.5 / cam.k}px "Microsoft YaHei",sans-serif`;
+    ctx.fillStyle = '#9aa5b1';
+    ctx.fillText(`${typeOf(n.type).name} · ${n.content_at}`, d.x, ty + fs + 3 / cam.k);
+    if (abandoned) {
+      ctx.fillStyle = '#aeb8c2';
+      ctx.fillText('已放弃', d.x, ty + fs + 3 / cam.k + 14 / cam.k);
+    }
   }
   ctx.globalAlpha = 1;
 }
