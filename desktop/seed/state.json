@@ -13,7 +13,8 @@
     "标注",
     "答辩",
     "消费者决策",
-    "消融"
+    "消融",
+    "开题"
    ]
   },
   {
@@ -30,7 +31,8 @@
     "底座",
     "TourBox",
     "广播名",
-    "Console"
+    "Console",
+    "板子"
    ]
   },
   {
@@ -45,7 +47,8 @@
     "JVMTI",
     "反编译",
     "脱壳",
-    "握手"
+    "握手",
+    "LibH"
    ]
   },
   {
@@ -59,7 +62,8 @@
     "Harness",
     "报名",
     "设计稿",
-    "演示"
+    "演示",
+    "作品"
    ]
   }
  ],
@@ -86,23 +90,8 @@
      "required": true
     },
     {
-     "key": "负责人",
-     "kind": "人员"
-    },
-    {
      "key": "理由",
      "kind": "长文本"
-    }
-   ]
-  },
-  {
-   "id": "asset",
-   "name": "资产",
-   "color": "#5b9b52",
-   "fields": [
-    {
-     "key": "位置",
-     "kind": "链接"
     }
    ]
   },
@@ -126,12 +115,57 @@
    ]
   },
   {
-   "id": "version",
-   "name": "版本",
-   "color": "#8a97a5",
+   "id": "doc",
+   "name": "资料",
+   "color": "#a1785a",
    "fields": [
     {
-     "key": "编号",
+     "key": "要点",
+     "kind": "长文本"
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "name": "数据",
+   "color": "#3f9d94",
+   "fields": [
+    {
+     "key": "规模",
+     "kind": "文本"
+    },
+    {
+     "key": "位置",
+     "kind": "链接"
+    }
+   ]
+  },
+  {
+   "id": "code",
+   "name": "代码",
+   "color": "#5f7590",
+   "fields": [
+    {
+     "key": "仓库",
+     "kind": "链接"
+    },
+    {
+     "key": "说明",
+     "kind": "文本"
+    }
+   ]
+  },
+  {
+   "id": "output",
+   "name": "产出",
+   "color": "#c08a3e",
+   "fields": [
+    {
+     "key": "形态",
+     "kind": "文本"
+    },
+    {
+     "key": "状态",
      "kind": "文本"
     }
    ]
@@ -144,8 +178,8 @@
    "type": "plan",
    "title": "研究框架 v1",
    "summary": "直播舆情 → 消费者决策，用 RAG 做问答与归因",
-   "content_at": "2026-08-12",
-   "ingest_at": "2026-11-21T00:30",
+   "content_at": "2026-08-10",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -159,38 +193,36 @@
   {
    "id": "d2",
    "project": "p_dachuang",
-   "type": "decision",
-   "title": "决定不做微调，改 RAG",
-   "summary": "数据量不够、没有 GPU，微调不划算",
-   "content_at": "2026-08-20",
-   "ingest_at": "2026-11-21T00:30",
+   "type": "doc",
+   "title": "开题报告",
+   "summary": "研究背景、问题定义、技术路线",
+   "content_at": "2026-08-14",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
    "source": null,
    "extra": {
-    "结论": "用 RAG + 提示工程，不微调",
-    "负责人": "我",
-    "理由": "标注数据不足万条，且本机无可用 GPU"
+    "要点": "把“舆情”落到可测量的消费者决策阶段上"
    },
    "parent": "d1"
   },
   {
    "id": "d3",
    "project": "p_dachuang",
-   "type": "asset",
-   "title": "直播弹幕语料",
-   "summary": "12 万条弹幕 + 2 万条评论，已脱敏",
-   "content_at": "2026-08-28",
-   "ingest_at": "2026-11-21T00:30",
+   "type": "doc",
+   "title": "参考文献 23 篇",
+   "summary": "RAG、观点挖掘、消费者决策路径",
+   "content_at": "2026-08-16",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
    "source": null,
    "extra": {
-    "位置": "D://03_code_list/舆情语料"
+    "要点": "以 RAG + 观点挖掘为主线"
    },
    "parent": "d1"
   },
@@ -198,10 +230,67 @@
    "id": "d4",
    "project": "p_dachuang",
    "type": "decision",
+   "title": "决定不做微调，改 RAG",
+   "summary": "数据量不够、没有 GPU，微调不划算",
+   "content_at": "2026-08-20",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "结论": "用 RAG + 提示工程，不微调",
+    "理由": "标注数据不足万条，且本机无可用 GPU"
+   },
+   "parent": "d1"
+  },
+  {
+   "id": "d5",
+   "project": "p_dachuang",
+   "type": "data",
+   "title": "直播弹幕语料",
+   "summary": "12 万条弹幕 + 2 万条评论，已脱敏",
+   "content_at": "2026-08-28",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "规模": "12 万条弹幕 / 2 万条评论",
+    "位置": "D://03_code_list/舆情语料"
+   },
+   "parent": "d4"
+  },
+  {
+   "id": "d6",
+   "project": "p_dachuang",
+   "type": "data",
+   "title": "四阶段标注集",
+   "summary": "认知 / 比较 / 下单 / 复购，各 3000 条",
+   "content_at": "2026-09-08",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "规模": "1.2 万条",
+    "位置": "D://03_code_list/舆情语料/标注"
+   },
+   "parent": "d5"
+  },
+  {
+   "id": "d7",
+   "project": "p_dachuang",
+   "type": "decision",
    "title": "消费者决策拆成 4 阶段",
-   "summary": "认知 / 比较 / 下单 / 复购，分别标注",
+   "summary": "按阶段分别标注，便于归因",
    "content_at": "2026-09-05",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -209,19 +298,18 @@
    "source": null,
    "extra": {
     "结论": "四阶段标注框架",
-    "负责人": "我",
-    "理由": "评委更认阶段化拆解"
+    "理由": "整体标注无法定位问题"
    },
-   "parent": "d2"
+   "parent": "d6"
   },
   {
-   "id": "d5",
+   "id": "d8",
    "project": "p_dachuang",
    "type": "retro",
    "title": "第一轮标注一致性 0.61",
-   "summary": "两个人标的差得远，尤其“比较”和“下单”分不清",
+   "summary": "两个人标得差得远，比较和下单分不清",
    "content_at": "2026-09-18",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -232,16 +320,16 @@
     "实际": "Kappa 只有 0.61，边界案例太多",
     "下次怎么做": "双人标 + 第三人仲裁，先定 20 条样例"
    },
-   "parent": "d4"
+   "parent": "d7"
   },
   {
-   "id": "d6",
+   "id": "d9",
    "project": "p_dachuang",
    "type": "plan",
    "title": "检索链路 v2",
    "summary": "BM25 + 向量双路，再做重排",
    "content_at": "2026-10-02",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -250,16 +338,16 @@
    "extra": {
     "版本": "v2"
    },
-   "parent": "d5"
+   "parent": "d8"
   },
   {
-   "id": "d7",
+   "id": "d10",
    "project": "p_dachuang",
    "type": "decision",
    "title": "换 bge-small-zh 做向量",
    "summary": "CPU 能跑，中文效果够用",
    "content_at": "2026-10-09",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -267,19 +355,37 @@
    "source": null,
    "extra": {
     "结论": "embedding 换 bge-small-zh",
-    "负责人": "我",
     "理由": "原模型英文为主，中文召回差"
    },
-   "parent": "d6"
+   "parent": "d9"
   },
   {
-   "id": "d8",
+   "id": "d11",
+   "project": "p_dachuang",
+   "type": "code",
+   "title": "检索 + 评测脚本",
+   "summary": "召回评测、引用校验、批量跑批",
+   "content_at": "2026-10-15",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "仓库": "D://03_code_list/舆情语料/code",
+    "说明": "recall.py / eval.py"
+   },
+   "parent": "d10"
+  },
+  {
+   "id": "d12",
    "project": "p_dachuang",
    "type": "retro",
    "title": "答辩预演复盘",
    "summary": "老师问“你怎么证明不是模型本来就会”",
    "content_at": "2026-11-05",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -290,16 +396,16 @@
     "实际": "缺一组对照实验，说服力不够",
     "下次怎么做": "任何结论都配一组消融"
    },
-   "parent": "d7"
+   "parent": "d11"
   },
   {
-   "id": "d9",
+   "id": "d13",
    "project": "p_dachuang",
    "type": "decision",
    "title": "补一组消融实验",
    "summary": "去掉检索、去掉提示，各跑一遍",
    "content_at": "2026-11-12",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -307,32 +413,42 @@
    "source": null,
    "extra": {
     "结论": "加三组消融",
-    "负责人": "我",
-    "理由": "回答“这分数是模型给的还是你的方法给的”"
+    "理由": "回答“分数是模型给的还是方法给的”"
    },
-   "parent": "d8"
+   "parent": "d12"
+  },
+  {
+   "id": "d14",
+   "project": "p_dachuang",
+   "type": "output",
+   "title": "论文初稿",
+   "summary": "方法、实验、讨论",
+   "content_at": "2026-11-15",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "形态": "Word / 1.4 万字",
+    "状态": "待补实验数据"
+   },
+   "parent": "d13"
   },
   {
    "id": "r1",
    "project": "p_relay",
    "type": "plan",
-   "title": "硬件选型：ESP32-S3",
-   "summary": "16MB Flash / 8MB PSRAM，CH343 串口",
-   "content_at": "2026-08-15",
-   "ingest_at": "2026-11-21T00:30",
+   "title": "让 NEO 冒充 Elite",
+   "summary": "NEO 按键 → ESP32 读 USB → BLE → Console 识别",
+   "content_at": "2026-08-12",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": {
-    "file": "TourBox-抓包笔记.md",
-    "locator": {
-     "kind": "text",
-     "start": 108,
-     "end": 146
-    },
-    "excerpt": "让 TourBox NEO 能操控 HarmonyOS 平板上的「天生会画」"
-   },
+   "source": null,
    "extra": {
     "版本": "v1"
    },
@@ -341,31 +457,176 @@
   {
    "id": "r2",
    "project": "p_relay",
-   "type": "decision",
-   "title": "先走 HID 流",
-   "summary": "以为注册 HID 服务就能被 Console 认成 Plus",
-   "content_at": "2026-08-20",
-   "ingest_at": "2026-11-21T00:30",
-   "status": "superseded",
+   "type": "doc",
+   "title": "交接文档",
+   "summary": "目标、硬件基线、结论、后续路径",
+   "content_at": "2026-11-17",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "中继底座-交接文档.md",
+    "locator": {
+     "kind": "text",
+     "start": 43,
+     "end": 67
+    },
+    "excerpt": "目标未达成（安卓端官方 App 未识别模拟设备）"
+   },
    "extra": {
-    "结论": "走 HID 流",
-    "负责人": "我",
-    "理由": "Plus 机型走 HID"
+    "要点": "项目暂停归档，排除了大量方向"
    },
    "parent": "r1"
   },
   {
    "id": "r3",
    "project": "p_relay",
+   "type": "doc",
+   "title": "试错全记录 44 条",
+   "summary": "每条：做法 → 结果 → 证据 → 结论",
+   "content_at": "2026-11-17",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": "中继底座-试错记录.md",
+    "locator": {
+     "kind": "text",
+     "start": 393,
+     "end": 413
+    },
+    "excerpt": "Console 按名字分流到 HID 流"
+   },
+   "extra": {
+    "要点": "避免重复踩坑"
+   },
+   "parent": "r1"
+  },
+  {
+   "id": "r4",
+   "project": "p_relay",
+   "type": "doc",
+   "title": "Console 反编译源码",
+   "summary": "1551 个 java，业务类可读",
+   "content_at": "2026-09-22",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "要点": "Console 按设备名与 productKey 分流"
+   },
+   "parent": "r1"
+  },
+  {
+   "id": "r5",
+   "project": "p_relay",
+   "type": "data",
+   "title": "固件镜像 73 个",
+   "summary": "从 Console 下发包里扒出的完整固件集",
+   "content_at": "2026-09-20",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "规模": "73 个 .bin，最大 95 KB",
+    "位置": "D://03_code_list/tourbox-neo-probe/ref/firmware-full"
+   },
+   "parent": "r1"
+  },
+  {
+   "id": "r6",
+   "project": "p_relay",
+   "type": "data",
+   "title": "身份帧样本",
+   "summary": "26 字节身份帧，首字节 0x07 表示解锁成功",
+   "content_at": "2026-09-10",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "规模": "37 组",
+    "位置": "D://03_code_list/tourbox-neo-probe/captures"
+   },
+   "parent": "r1"
+  },
+  {
+   "id": "r7",
+   "project": "p_relay",
+   "type": "code",
+   "title": "esp32s3-relay-dock 仓库",
+   "summary": "ESP-IDF 固件，113 个提交",
+   "content_at": "2026-08-15",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "仓库": "D:\\03_code_list\\esp32s3-relay-dock",
+    "说明": "基线 b6677ef"
+   },
+   "parent": "r1"
+  },
+  {
+   "id": "r8",
+   "project": "p_relay",
+   "type": "code",
+   "title": "BLE 服务实现",
+   "summary": "FFF0 / FFF1 通知 / FFF2 写入",
+   "content_at": "2026-08-28",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "仓库": "main/ble_relay.c",
+    "说明": "GATT 直连"
+   },
+   "parent": "r7"
+  },
+  {
+   "id": "r9",
+   "project": "p_relay",
+   "type": "decision",
+   "title": "先走 HID 流（走错了）",
+   "summary": "以为注册 HID 服务就能被认成 Plus，结果永远卡在“正在连接”",
+   "content_at": "2026-08-30",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "abandoned",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "结论": "走 HID 流",
+    "理由": "Plus 机型走 HID"
+   },
+   "parent": "r8"
+  },
+  {
+   "id": "r10",
+   "project": "p_relay",
    "type": "decision",
    "title": "放弃 HID，改 GATT 直连",
    "summary": "广播名用 Elite，Console 就走 GATT",
-   "content_at": "2026-08-30",
-   "ingest_at": "2026-11-21T00:30",
+   "content_at": "2026-09-02",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -381,19 +642,18 @@
    },
    "extra": {
     "结论": "GATT 直连 + 广播名 Elite",
-    "负责人": "我",
-    "理由": "HID 描述符不完整，永远卡在“正在连接”"
+    "理由": "HID 描述符不完整，达不到 HID 流要求"
    },
-   "parent": "r2"
+   "parent": "r8"
   },
   {
-   "id": "r4",
+   "id": "r11",
    "project": "p_relay",
    "type": "retro",
    "title": "原以为名字随便改就行",
    "summary": "名字改 Plus 就卡住，因为 Console 按名字分流",
    "content_at": "2026-09-06",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -412,16 +672,16 @@
     "实际": "分流依据是广播名",
     "下次怎么做": "先看名字，再谈协议"
    },
-   "parent": "r3"
+   "parent": "r10"
   },
   {
-   "id": "r5",
+   "id": "r12",
    "project": "p_relay",
    "type": "decision",
    "title": "冒充 productKey 让 Console 识别",
    "summary": "身份帧里 productKey 写 101（Elite 黑）",
    "content_at": "2026-09-12",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -429,37 +689,18 @@
    "source": null,
    "extra": {
     "结论": "productKey=101",
-    "负责人": "我",
     "理由": "Console 用 productKey 决定机型示意图"
    },
-   "parent": "r4"
+   "parent": "r11"
   },
   {
-   "id": "r6",
-   "project": "p_relay",
-   "type": "asset",
-   "title": "固件镜像 73 个",
-   "summary": "从 Console 下发包里扒出来的完整固件集",
-   "content_at": "2026-09-20",
-   "ingest_at": "2026-11-21T00:30",
-   "status": "active",
-   "confidence": 0.95,
-   "auto": false,
-   "placement": "grow",
-   "source": null,
-   "extra": {
-    "位置": "D://03_code_list/tourbox-neo-probe/ref/firmware-full"
-   },
-   "parent": "r5"
-  },
-  {
-   "id": "r7",
+   "id": "r13",
    "project": "p_relay",
    "type": "retro",
    "title": "蓝牙配对失败复盘",
-   "summary": "改了几次名字后 Windows 缓存旧配对，怎么都连不上",
+   "summary": "改名后 Windows 缓存旧配对，怎么都连不上",
    "content_at": "2026-10-08",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -470,16 +711,16 @@
     "实际": "Windows 侧缓存了旧设备",
     "下次怎么做": "改名字后先删配对再扫"
    },
-   "parent": "r6"
+   "parent": "r12"
   },
   {
-   "id": "r8",
+   "id": "r14",
    "project": "p_relay",
    "type": "decision",
    "title": "锁定基线 b6677ef",
    "summary": "把能用的那版固化，不再往上堆功能",
    "content_at": "2026-10-15",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -495,19 +736,18 @@
    },
    "extra": {
     "结论": "基线锁 b6677ef",
-    "负责人": "我",
     "理由": "再改就不可复现"
    },
-   "parent": "r7"
+   "parent": "r13"
   },
   {
-   "id": "r9",
+   "id": "r15",
    "project": "p_relay",
    "type": "plan",
    "title": "蓝牙中转站 PCB v1",
    "summary": "ESP32-S3 + 外部天线 + USB-C",
    "content_at": "2026-10-25",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -516,16 +756,16 @@
    "extra": {
     "版本": "v1"
    },
-   "parent": "r8"
+   "parent": "r14"
   },
   {
-   "id": "r10",
+   "id": "r16",
    "project": "p_relay",
    "type": "decision",
    "title": "改板：加外部天线",
    "summary": "板载天线在金属外壳里衰减太大",
    "content_at": "2026-11-02",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -533,47 +773,38 @@
    "source": null,
    "extra": {
     "结论": "改用 IPEX 外置天线",
-    "负责人": "我",
     "理由": "实测 RSSI 掉 12dB"
    },
-   "parent": "r9"
+   "parent": "r15"
   },
   {
-   "id": "r11",
+   "id": "r17",
    "project": "p_relay",
    "type": "retro",
-   "title": "项目暂停归档",
-   "summary": "安卓端 App 始终不认模拟设备",
+   "title": "安卓端走不通，暂停归档",
+   "summary": "安卓/iPad App 始终不认模拟设备",
    "content_at": "2026-11-17",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": {
-    "file": "中继底座-交接文档.md",
-    "locator": {
-     "kind": "text",
-     "start": 43,
-     "end": 67
-    },
-    "excerpt": "目标未达成（安卓端官方 App 未识别模拟设备）"
-   },
+   "source": null,
    "extra": {
     "原以为": "Windows 能用，安卓应该也能",
     "实际": "App 有额外内部校验，反推不出来",
     "下次怎么做": "先验证最难的那一端"
    },
-   "parent": "r10"
+   "parent": "r16"
   },
   {
    "id": "t1",
    "project": "p_probe",
    "type": "plan",
-   "title": "抓包方案",
-   "summary": "先看设备到底吐什么，再谈模拟",
+   "title": "先看清设备吐什么",
+   "summary": "抓包 → 解协议 → 再谈模拟",
    "content_at": "2026-08-18",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -587,57 +818,76 @@
   {
    "id": "t2",
    "project": "p_probe",
-   "type": "decision",
-   "title": "用 CDC-ACM 抓包，不上逻辑分析仪",
-   "summary": "NEO 是标准串口设备，直接读 COM3",
-   "content_at": "2026-08-22",
-   "ingest_at": "2026-11-21T00:30",
-   "status": "active",
-   "confidence": 0.95,
-   "auto": false,
-   "placement": "grow",
-   "source": {
-    "file": "TourBox-协议.md",
-    "locator": {
-     "kind": "text",
-     "start": 347,
-     "end": 393
-    },
-    "excerpt": "The device requires a specific unlock sequence"
-   },
-   "extra": {
-    "结论": "pyserial 读 COM3",
-    "负责人": "我",
-    "理由": "省一台分析仪，而且能拿到完整帧"
-   },
-   "parent": "t1"
-  },
-  {
-   "id": "t3",
-   "project": "p_probe",
-   "type": "asset",
-   "title": "capture.py 抓包脚本",
-   "summary": "115200 8N1，按帧切分落盘",
-   "content_at": "2026-08-24",
-   "ingest_at": "2026-11-21T00:30",
+   "type": "data",
+   "title": "NEO 串口日志",
+   "summary": "USB CDC-ACM，115200 8N1",
+   "content_at": "2026-08-20",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
    "source": null,
    "extra": {
-    "位置": "D://03_code_list/tourbox-neo-probe/capture.py"
+    "规模": "约 40 万行",
+    "位置": "D://03_code_list/tourbox-neo-probe/logs"
+   },
+   "parent": "t1"
+  },
+  {
+   "id": "t3",
+   "project": "p_probe",
+   "type": "code",
+   "title": "capture.py 抓包脚本",
+   "summary": "按帧切分、落盘、可回放",
+   "content_at": "2026-08-24",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": "TourBox-抓包笔记.md",
+    "locator": {
+     "kind": "text",
+     "start": 108,
+     "end": 146
+    },
+    "excerpt": "让 TourBox NEO 能操控 HarmonyOS 平板上的「天生会画」"
+   },
+   "extra": {
+    "仓库": "D://03_code_list/tourbox-neo-probe/capture.py",
+    "说明": "pyserial"
    },
    "parent": "t2"
   },
   {
    "id": "t4",
    "project": "p_probe",
+   "type": "decision",
+   "title": "用 CDC-ACM 抓包，不上逻辑分析仪",
+   "summary": "NEO 是标准串口设备，直接读 COM3",
+   "content_at": "2026-08-22",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "结论": "pyserial 读 COM3",
+    "理由": "省一台分析仪，还能拿到完整帧"
+   },
+   "parent": "t3"
+  },
+  {
+   "id": "t5",
+   "project": "p_probe",
    "type": "retro",
    "title": "Console 独占 COM3",
    "summary": "一开 Console 就抓不到数据",
    "content_at": "2026-08-26",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -648,16 +898,16 @@
     "实际": "Console 打开后独占，必须先退出",
     "下次怎么做": "抓包前先杀 Console 进程"
    },
-   "parent": "t3"
+   "parent": "t4"
   },
   {
-   "id": "t5",
+   "id": "t6",
    "project": "p_probe",
-   "type": "decision",
-   "title": "逆向 LibH.dll",
-   "summary": "它是 JVMTI 代理，能在类加载时解密",
-   "content_at": "2026-09-15",
-   "ingest_at": "2026-11-21T00:30",
+   "type": "doc",
+   "title": "协议文档（已解）",
+   "summary": "握手两个阶段 + XOR 密钥",
+   "content_at": "2026-09-10",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -672,20 +922,37 @@
     "excerpt": "Successfully reverse-engineered the TourBox Elite authentication protocol"
    },
    "extra": {
-    "结论": "用完整 JDK 加载 JVMTI 代理",
-    "负责人": "我",
-    "理由": "Console 自带的精简 JRE 注入不进去"
+    "要点": "55 00 07 88 94 00 1A FE 解锁；D5 挑战应答"
    },
-   "parent": "t4"
+   "parent": "t5"
   },
   {
-   "id": "t6",
+   "id": "t7",
+   "project": "p_probe",
+   "type": "decision",
+   "title": "逆向 LibH.dll",
+   "summary": "它是 JVMTI 代理，能在类加载时解密",
+   "content_at": "2026-09-15",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "结论": "用完整 JDK 加载 JVMTI 代理",
+    "理由": "Console 自带的精简 JRE 注入不进去"
+   },
+   "parent": "t6"
+  },
+  {
+   "id": "t8",
    "project": "p_probe",
    "type": "retro",
    "title": "精简 JRE 没有 java.instrument",
    "summary": "注入到运行中的 Console 必然失败",
    "content_at": "2026-09-18",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -696,54 +963,129 @@
     "实际": "缺 instrument 模块",
     "下次怎么做": "自己起 JVM，别 attach"
    },
-   "parent": "t5"
+   "parent": "t7"
   },
   {
-   "id": "t7",
+   "id": "t9",
    "project": "p_probe",
-   "type": "asset",
+   "type": "code",
+   "title": "dump.jar + LibH.dll",
+   "summary": "自写 javaagent，导出解密后的类",
+   "content_at": "2026-09-20",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "仓库": "D://03_code_list/tourbox-console-decompiled",
+    "说明": "配合 -agentpath 使用"
+   },
+   "parent": "t8"
+  },
+  {
+   "id": "t10",
+   "project": "p_probe",
+   "type": "data",
    "title": "反编译源码 1551 个 java",
    "summary": "Console 业务类全部还原",
    "content_at": "2026-09-22",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
    "source": null,
    "extra": {
-    "位置": "D://03_code_list/tourbox-console-decompiled"
+    "规模": "1551 个 .java",
+    "位置": "D://03_code_list/tourbox-console-decompiled/src"
    },
-   "parent": "t6"
+   "parent": "t9"
   },
   {
-   "id": "t8",
+   "id": "t11",
    "project": "p_probe",
    "type": "decision",
-   "title": "停掉 360 加固的脱壳尝试",
-   "summary": "newBlackDex 只能 dump 出壳自己的 dex",
+   "title": "硬脱壳 360 企业版（走错了）",
+   "summary": "newBlackDex 深度脱壳只拿到壳自己的 dex",
+   "content_at": "2026-10-20",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "abandoned",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "结论": "硬脱壳不可行",
+    "理由": "无 root，真实 dex 藏在加密载荷里"
+   },
+   "parent": "t10"
+  },
+  {
+   "id": "t12",
+   "project": "p_probe",
+   "type": "decision",
+   "title": "停掉脱壳路线",
+   "summary": "不再在脱壳上耗时间，转去做协议模拟",
    "content_at": "2026-10-30",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
    "source": null,
    "extra": {
-    "结论": "放弃脱壳路线",
-    "负责人": "我",
-    "理由": "无 root，脱不出来"
+    "结论": "放弃脱壳",
+    "理由": "投入产出不划算"
    },
-   "parent": "t7"
+   "parent": "t11"
+  },
+  {
+   "id": "t13",
+   "project": "p_probe",
+   "type": "output",
+   "title": "NEO → 平板改造方案",
+   "summary": "按键映射到 GoPaint",
+   "content_at": "2026-10-24",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "形态": "方案 + 演示",
+    "状态": "Windows 可用，鸿蒙待验证"
+   },
+   "parent": "t12"
   },
   {
    "id": "q1",
    "project": "p_qianwen",
+   "type": "doc",
+   "title": "赛题原文 6 道",
+   "summary": "命题 05：知识密集型多项目团队的知识问答 Harness",
+   "content_at": "2026-11-18",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "要点": "团队级、多项目、文档与经验、可溯源"
+   },
+   "parent": null
+  },
+  {
+   "id": "q2",
+   "project": "p_qianwen",
    "type": "plan",
-   "title": "选题：命题 05 知识问答 Harness",
+   "title": "选题：命题 05",
    "summary": "内容消费方向，一周内交作品",
    "content_at": "2026-11-18",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -752,16 +1094,16 @@
    "extra": {
     "版本": "v1"
    },
-   "parent": null
+   "parent": "q1"
   },
   {
-   "id": "q2",
+   "id": "q3",
    "project": "p_qianwen",
    "type": "decision",
    "title": "定为命题 05，放弃 03",
    "summary": "03 名额多但缺真实经营数据",
    "content_at": "2026-11-19",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -769,19 +1111,74 @@
    "source": null,
    "extra": {
     "结论": "报命题 05",
-    "负责人": "我",
     "理由": "能力匹配度更高"
    },
-   "parent": "q1"
+   "parent": "q2"
   },
   {
-   "id": "q3",
+   "id": "q4",
+   "project": "p_qianwen",
+   "type": "doc",
+   "title": "设计稿 v1.2",
+   "summary": "21 页：数据模型、闸门、交互规格",
+   "content_at": "2026-11-20",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "要点": "可直接照着开发"
+   },
+   "parent": "q3"
+  },
+  {
+   "id": "q5",
+   "project": "p_qianwen",
+   "type": "data",
+   "title": "演示数据",
+   "summary": "4 个真实项目、52 个节点、7 份原文",
+   "content_at": "2026-11-21",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "规模": "52 节点 / 36 关系",
+    "位置": "data/state.json"
+   },
+   "parent": "q4"
+  },
+  {
+   "id": "q6",
+   "project": "p_qianwen",
+   "type": "code",
+   "title": "项目Git 应用",
+   "summary": "Electron + d3 力导向",
+   "content_at": "2026-11-21",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "仓库": "D:\\03_code_list\\project-git-项目知识时间轴",
+    "说明": "main.js / engine.js / web"
+   },
+   "parent": "q5"
+  },
+  {
+   "id": "q7",
    "project": "p_qianwen",
    "type": "retro",
    "title": "第一版界面推倒重来",
    "summary": "手搓坐标 + 卡片布局，渲染 bug 一堆",
    "content_at": "2026-11-20",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -792,16 +1189,16 @@
     "实际": "缩放/连线/重叠全要自己管，很容易崩",
     "下次怎么做": "布局交给力导向库"
    },
-   "parent": "q2"
+   "parent": "q6"
   },
   {
-   "id": "q4",
+   "id": "q8",
    "project": "p_qianwen",
    "type": "decision",
-   "title": "改力导向 + 白底",
-   "summary": "d3 力导向，直线连接，时间放节点下面",
+   "title": "改白底 + 力导向 + 卡片",
+   "summary": "直线连接、时间用很弱的向右力",
    "content_at": "2026-11-21",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
@@ -809,47 +1206,47 @@
    "source": null,
    "extra": {
     "结论": "重做为桌面应用",
-    "负责人": "我",
-    "理由": "稳定优先，视觉其次"
+    "理由": "稳定优先，能看清优先"
    },
-   "parent": "q3"
+   "parent": "q7"
   },
   {
-   "id": "q5",
-   "project": "p_qianwen",
-   "type": "asset",
-   "title": "设计稿 v1.2",
-   "summary": "21 页，含数据模型与交互规格",
-   "content_at": "2026-11-20",
-   "ingest_at": "2026-11-21T00:30",
-   "status": "active",
-   "confidence": 0.95,
-   "auto": false,
-   "placement": "grow",
-   "source": null,
-   "extra": {
-    "位置": "docs/项目Git-设计稿v1.2.docx"
-   },
-   "parent": "q4"
-  },
-  {
-   "id": "q6",
+   "id": "q9",
    "project": "p_qianwen",
    "type": "decision",
-   "title": "演示改用自己做过的项目",
-   "summary": "避免虚构案例，讲起来更顺",
+   "title": "样例改用自己做过的项目",
+   "summary": "不编案例，讲起来顺",
    "content_at": "2026-11-21",
-   "ingest_at": "2026-11-21T00:30",
+   "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
    "source": null,
    "extra": {
-    "结论": "用大创 / 中继 / 逆向三个项目做样例",
-    "负责人": "我"
+    "结论": "用大创/中继/逆向做样例",
+    "理由": "一眼能看懂"
    },
-   "parent": "q5"
+   "parent": "q8"
+  },
+  {
+   "id": "q10",
+   "project": "p_qianwen",
+   "type": "output",
+   "title": "演示视频",
+   "summary": "3 分钟走 6 个镜头",
+   "content_at": "2026-11-22",
+   "ingest_at": "2026-11-21T01:40",
+   "status": "draft",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": null,
+   "extra": {
+    "形态": "录屏",
+    "状态": "待录"
+   },
+   "parent": "q9"
   }
  ],
  "edges": [
@@ -865,7 +1262,7 @@
   },
   {
    "from": "d4",
-   "to": "d2",
+   "to": "d1",
    "kind": "derived"
   },
   {
@@ -894,33 +1291,58 @@
    "kind": "derived"
   },
   {
+   "from": "d10",
+   "to": "d9",
+   "kind": "derived"
+  },
+  {
+   "from": "d11",
+   "to": "d10",
+   "kind": "derived"
+  },
+  {
+   "from": "d12",
+   "to": "d11",
+   "kind": "derived"
+  },
+  {
+   "from": "d13",
+   "to": "d12",
+   "kind": "derived"
+  },
+  {
+   "from": "d14",
+   "to": "d13",
+   "kind": "derived"
+  },
+  {
    "from": "r2",
    "to": "r1",
    "kind": "derived"
   },
   {
    "from": "r3",
-   "to": "r2",
+   "to": "r1",
    "kind": "derived"
   },
   {
    "from": "r4",
-   "to": "r3",
+   "to": "r1",
    "kind": "derived"
   },
   {
    "from": "r5",
-   "to": "r4",
+   "to": "r1",
    "kind": "derived"
   },
   {
    "from": "r6",
-   "to": "r5",
+   "to": "r1",
    "kind": "derived"
   },
   {
    "from": "r7",
-   "to": "r6",
+   "to": "r1",
    "kind": "derived"
   },
   {
@@ -935,12 +1357,42 @@
   },
   {
    "from": "r10",
-   "to": "r9",
+   "to": "r8",
    "kind": "derived"
   },
   {
    "from": "r11",
    "to": "r10",
+   "kind": "derived"
+  },
+  {
+   "from": "r12",
+   "to": "r11",
+   "kind": "derived"
+  },
+  {
+   "from": "r13",
+   "to": "r12",
+   "kind": "derived"
+  },
+  {
+   "from": "r14",
+   "to": "r13",
+   "kind": "derived"
+  },
+  {
+   "from": "r15",
+   "to": "r14",
+   "kind": "derived"
+  },
+  {
+   "from": "r16",
+   "to": "r15",
+   "kind": "derived"
+  },
+  {
+   "from": "r17",
+   "to": "r16",
    "kind": "derived"
   },
   {
@@ -979,6 +1431,31 @@
    "kind": "derived"
   },
   {
+   "from": "t9",
+   "to": "t8",
+   "kind": "derived"
+  },
+  {
+   "from": "t10",
+   "to": "t9",
+   "kind": "derived"
+  },
+  {
+   "from": "t11",
+   "to": "t10",
+   "kind": "derived"
+  },
+  {
+   "from": "t12",
+   "to": "t11",
+   "kind": "derived"
+  },
+  {
+   "from": "t13",
+   "to": "t12",
+   "kind": "derived"
+  },
+  {
    "from": "q2",
    "to": "q1",
    "kind": "derived"
@@ -1004,23 +1481,58 @@
    "kind": "derived"
   },
   {
-   "from": "r3",
-   "to": "r2",
+   "from": "q7",
+   "to": "q6",
+   "kind": "derived"
+  },
+  {
+   "from": "q8",
+   "to": "q7",
+   "kind": "derived"
+  },
+  {
+   "from": "q9",
+   "to": "q8",
+   "kind": "derived"
+  },
+  {
+   "from": "q10",
+   "to": "q9",
+   "kind": "derived"
+  },
+  {
+   "from": "r10",
+   "to": "r9",
    "kind": "supersedes"
   },
   {
+   "from": "t12",
+   "to": "t11",
+   "kind": "supersedes"
+  },
+  {
+   "from": "r12",
+   "to": "t7",
+   "kind": "relates"
+  },
+  {
+   "from": "r17",
+   "to": "t12",
+   "kind": "relates"
+  },
+  {
+   "from": "q9",
+   "to": "r10",
+   "kind": "relates"
+  },
+  {
+   "from": "q9",
+   "to": "d4",
+   "kind": "relates"
+  },
+  {
    "from": "r5",
-   "to": "t5",
-   "kind": "relates"
-  },
-  {
-   "from": "r11",
-   "to": "t8",
-   "kind": "relates"
-  },
-  {
-   "from": "q6",
-   "to": "r3",
+   "to": "r2",
    "kind": "relates"
   }
  ],
@@ -1028,8 +1540,8 @@
  "choices": [],
  "edits": [],
  "meta": {
-  "name": "项目Git · 真实项目演示数据",
-  "version": 2,
+  "name": "项目Git · 真实项目全量数据",
+  "version": 3,
   "git_repo": "D:\\03_code_list\\esp32s3-relay-dock",
   "git_synced": false
  }

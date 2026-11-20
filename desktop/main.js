@@ -281,6 +281,11 @@ function createWindow() {
     win.show();
     if (SHOT_MODE) {
       setTimeout(async () => {
+        if (process.argv.includes('--relay')) {
+          await new Promise(r => setTimeout(r, 800));
+          try { await win.webContents.executeJavaScript('curProject="p_relay";rebuild();'); } catch(e) {}
+          await new Promise(r => setTimeout(r, 1800));
+        }
         if (process.argv.includes('--drawer')) {
           await new Promise(r => setTimeout(r, 1200));
           try {
@@ -289,10 +294,6 @@ function createWindow() {
           } catch(e) { fs.writeFileSync(path.join(ROOT, 'docs', 'dbg2.txt'), 'EXE:' + e.message); }
           await new Promise(r => setTimeout(r, 700));
         }
-        try {
-          const dbg = await win.webContents.executeJavaScript('JSON.stringify({dbg:window.__dbg||{}, err:window.__err||null})');
-          fs.writeFileSync(path.join(ROOT, 'docs', 'debug.json'), dbg || '{}');
-        } catch (e) { console.error('dbg fail', e); }
         const img = await win.webContents.capturePage();
         const outPng = path.join(ROOT, 'docs', 'app-shot.png');
         fs.mkdirSync(path.dirname(outPng), { recursive: true });
