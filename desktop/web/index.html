@@ -8,104 +8,33 @@
 </head>
 <body>
 
-<header class="topbar">
+<header class="bar">
   <div class="brand">项目Git</div>
   <nav id="tabs" class="tabs"></nav>
-  <div class="search-wrap">
-    <input id="search" placeholder="搜索" spellcheck="false" />
-    <div id="search-hint" class="search-hint"></div>
-  </div>
-  <button id="btn-capture" class="btn primary">收进来</button>
-  <button id="btn-more" class="btn ghost more">⋯</button>
-  <div id="more-menu" class="menu hidden">
-    <button id="btn-queue" class="menu-item">待归类 <b id="queue-count">0</b></button>
-    <button id="btn-edit" class="menu-item">调整节点</button>
-    <button id="btn-type" class="menu-item">新建类型</button>
-    <button id="btn-git" class="menu-item">接入 git 仓库</button>
-    <div class="menu-sep"></div>
-    <button class="menu-item" data-dens="0.85">排版：紧凑</button>
-    <button class="menu-item" data-dens="1.1">排版：标准</button>
-    <button class="menu-item" data-dens="1.35">排版：宽松</button>
-  </div>
+  <div class="grow"></div>
+  <input id="search" class="search" placeholder="搜索" spellcheck="false" />
+  <button id="btn-capture" class="btn">收进来</button>
+  <div id="search-hint" class="hint"></div>
 </header>
 
-<div id="main">
-  <aside id="nav" class="nav">
-    <div class="nav-h">
-      <span id="nav-title">节点</span>
-      <span class="nav-count" id="nav-count">0</span>
-    </div>
-    <div class="nav-filter" id="nav-filter">
-      <button data-t="" class="chipf on">全部</button>
-      <button data-t="decision" class="chipf">决策</button>
-      <button data-t="plan" class="chipf">方案</button>
-      <button data-t="retro" class="chipf">复盘</button>
-      <button data-t="doc" class="chipf">资料</button>
-      <button data-t="data" class="chipf">数据</button>
-      <button data-t="code" class="chipf">代码</button>
-      <button data-t="output" class="chipf">产出</button>
-    </div>
-    <div class="nav-body" id="nav-list"></div>
-  </aside>
+<canvas id="c"></canvas>
 
-  <div id="stage">
-    <canvas id="canvas"></canvas>
-    <div id="tip" class="tip"></div>
-    <div class="zoombar">
-      <button id="z-in" title="放大">＋</button><button id="z-out" title="缩小">－</button><button id="z-fit" title="适应">⤢</button>
-    </div>
-  </div>
-
-  <aside id="drawer" class="drawer hidden">
-    <div class="drawer-h">
-      <div class="drawer-title" id="d-title">—</div>
-      <button id="d-close" class="icon">✕</button>
-    </div>
-    <div id="d-body" class="drawer-body"></div>
-  </aside>
+<div id="panel" class="panel hidden">
+  <button id="p-close" class="close">✕</button>
+  <h2 id="p-title"></h2>
+  <div id="p-meta" class="meta"></div>
+  <div id="p-body" class="body"></div>
 </div>
 
-<footer class="statusbar"><div id="trace" class="trace"></div></footer>
-
-<div id="modal-capture" class="modal hidden">
-  <div class="modal-box">
+<div id="modal" class="modal hidden">
+  <div class="box">
     <h3>收进来</h3>
-    <p class="muted">粘贴群聊、纪要或邮件正文。带「说话人 + 时间」的行会拆成独立条目。</p>
-    <textarea id="capture-text" rows="9" placeholder="张三 2026-11-19 10:12&#10;定价就按 B 方案走吧，A 的风险太大&#10;李四 2026-11-19 10:30&#10;同意，明天同步给运营"></textarea>
+    <textarea id="m-text" rows="8" placeholder="把群聊、纪要粘进来。带「说话人 时间」的行会拆成独立条目。"></textarea>
     <div class="row">
-      <label class="muted">日期 <input id="capture-date" type="date" /></label>
-      <div class="spacer"></div>
+      <input id="m-date" type="date" />
+      <div class="grow"></div>
       <button class="btn ghost" data-close>取消</button>
-      <button id="capture-go" class="btn primary">开始</button>
-    </div>
-  </div>
-</div>
-
-<div id="modal-place" class="modal hidden">
-  <div class="modal-box">
-    <h3>这条属于哪里？</h3>
-    <div id="place-text" class="quote"></div>
-    <div id="place-cands" class="cands"></div>
-    <input id="place-custom" placeholder="都不是，我自己起个名字" />
-    <div class="row">
-      <button class="btn ghost" data-close>先放着</button>
-      <div class="spacer"></div>
-      <button id="place-confirm" class="btn primary">确定</button>
-    </div>
-  </div>
-</div>
-
-<div id="modal-type" class="modal hidden">
-  <div class="modal-box">
-    <h3>新建类型</h3>
-    <p class="muted">字段名用中文，AI 会按你定的字段抽取。</p>
-    <input id="type-name" placeholder="类型名称，例如：实验结果" />
-    <div id="type-fields" class="fields"></div>
-    <button id="type-add-field" class="btn ghost small">＋ 加一个字段</button>
-    <div class="row">
-      <button class="btn ghost" data-close>取消</button>
-      <div class="spacer"></div>
-      <button id="type-save" class="btn primary">创建</button>
+      <button id="m-go" class="btn primary">确定</button>
     </div>
   </div>
 </div>
