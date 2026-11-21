@@ -240,6 +240,7 @@ function rebuild() {
 
   if (sim) { sim.stop(); sim = null; }
 
+  ns.forEach((d) => { d.hx = d.x; d.hy = d.y; });
   selected = null; hovered = null; active = null;
   $('#drawer').classList.add('hidden');
   renderNav();
@@ -266,6 +267,40 @@ function deoverlap(iters = 90) {
     }
     if (!moved) break;
   }
+}
+
+/** 轻量松弛：互斥让开 + 慢慢靠回家。pinnedId 为被拖动的节点（保持不动） */
+function settle(pinnedId, opts) {
+  const o = Object.assign({ frames: 42, its: 3, pull: 0.035, gap: 20 }, opts || {});
+  let frame = 0;
+  if (settle._raf) cancelAnimationFrame(settle._raf);
+  const step = () => {
+    for (let it = 0; it < o.its; it++) {
+      for (let i = 0; i < ns.length; i++) {
+        const a = ns[i];
+        if (a.id === pinnedId) continue;
+        // 回家（很弱）
+        a.x += (a.hx - a.x) * o.pull;
+        a.y += (a.hy - a.y) * o.pull;
+        for (let j = 0; j < ns.length; j++) {
+          if (i === j) continue;
+          const b = ns[j];
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const minD = a.r + b.r + o.gap;
+          const dist = Math.hypot(dx, dy) || 0.01;
+          if (dist < minD) {
+            const push = (minD - dist) * 0.45;
+            const ux = dx / dist, uy = dy / dist;
+            a.x += ux * push; a.y += uy * push;
+          }
+        }
+      }
+    }
+    draw();
+    if (++frame < o.frames) settle._raf = requestAnimationFrame(step);
+    else settle._raf = null;
+  };
+  settle._raf = requestAnimationFrame(step);
 }
 
 function fit() {
@@ -959,6 +994,11 @@ function bindUI() {
     if (typing) return;
     if (e.key === '/') { e.preventDefault(); $('#search').focus(); }
     if (e.key === 'f' || e.key === 'F') fit();
+    if (e.key === 'r' || e.key === 'R') {
+      ns.forEach((d) => { d.x = d.hx; d.y = d.hy; });
+      settle(null, { frames: 26, pull: 0.12 });
+      toast('已复位');
+    }
     if (e.key === 'e' || e.key === 'E') $('#btn-edit').click();
     if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); window.api.undo().then(async () => { await loadState(); rebuild(); }); }
   });
