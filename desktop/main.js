@@ -290,6 +290,24 @@ function createWindow() {
           try { await win.webContents.executeJavaScript('fit(); draw();'); } catch(e) {}
           await new Promise(r => setTimeout(r, 800));
         }
+        if (process.argv.includes('--preview')) {
+          await new Promise(r => setTimeout(r, 900));
+          try {
+            await win.webContents.executeJavaScript('curProject="p_relay";rebuild();');
+            await new Promise(r => setTimeout(r, 900));
+            await win.webContents.executeJavaScript('(function(){var d=ns.filter(function(x){return x.n.source&&x.n.source.file})[0];select(d.id);openPreview(d.n);return d.id;})()');
+          } catch(e) {}
+          await new Promise(r => setTimeout(r, 1600));
+        }
+        if (process.argv.includes('--previewpdf')) {
+          await new Promise(r => setTimeout(r, 900));
+          try {
+            await win.webContents.executeJavaScript('curProject="p_relay";rebuild();');
+            await new Promise(r => setTimeout(r, 800));
+            await win.webContents.executeJavaScript('select("r_pdf");openPreview(S.nodes.find(function(n){return n.id==="r_pdf"}));');
+          } catch(e) {}
+          await new Promise(r => setTimeout(r, 2000));
+        }
         if (process.argv.includes('--relay')) {
           await new Promise(r => setTimeout(r, 800));
           try { await win.webContents.executeJavaScript('curProject="p_relay";rebuild();'); } catch(e) {}
@@ -382,6 +400,34 @@ function registerIpc() {
   ipcMain.handle('search', (e, p) => search(p));
   ipcMain.handle('file:open', (e, p) => openFile(p));
   ipcMain.handle('shell:open', (e, p) => shell.openPath(p));
+  ipcMain.handle('file:preview', async (e, p) => {
+    const n = store.nodeById(p.nodeId);
+    if (!n || !n.source || !n.source.file) return { error: '没有关联文件' };
+    const name = n.source.file;
+    const full = path.join(store.filesDir(), name);
+    if (!fs.existsSync(full)) return { error: '文件不存在：' + name };
+    const loc = n.source.locator || {};
+    const ext = path.extname(name).toLowerCase();
+    const IMG = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg'];
+    try {
+      if (IMG.includes(ext)) {
+        const b64 = fs.readFileSync(full).toString('base64');
+        const mime = ext === '.svg' ? 'image/svg+xml' : 'image/' + ext.slice(1).replace('jpg', 'jpeg');
+        return { kind: 'image', name, dataUrl: 'data:' + mime + ';base64,' + b64, rect: loc.rect || null };
+      }
+      if (ext === '.pdf') {
+        const b64 = fs.readFileSync(full).toString('base64');
+        return { kind: 'pdf', name, dataUrl: 'data:application/pdf;base64,' + b64, page: loc.page || 1, rect: loc.rect || null };
+      }
+      const text = fs.readFileSync(full, 'utf8');
+      const CODE = ['.c', '.h', '.py', '.js', '.ts', '.json', '.yaml', '.yml', '.sh', '.java', '.cpp', '.rs', '.go', '.sql', '.ini', '.toml'];
+      const kind = ext === '.md' ? 'markdown' : (CODE.includes(ext) ? 'code' : 'text');
+      return { kind, name, text, start: loc.start ?? null, end: loc.end ?? null, excerpt: n.source.excerpt || '' };
+    } catch (err) {
+      return { error: String(err && err.message || err) };
+    }
+  });
+
   ipcMain.handle('file:openExtern', async (e, p) => {
     const n = store.nodeById(p.nodeId);
     if (!n || !n.source || !n.source.file) return { error: '没有关联文件' };

@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('api', {
   search: (p) => ipcRenderer.invoke('search', p),
   openFile: (p) => ipcRenderer.invoke('file:open', p),
   openFileExtern: (p) => ipcRenderer.invoke('file:openExtern', p),
+  preview: (p) => ipcRenderer.invoke('file:preview', p),
   openPath: (p) => ipcRenderer.invoke('shell:open', p),
   info: () => ipcRenderer.invoke('app:info'),
   onMenu: (fn) => {

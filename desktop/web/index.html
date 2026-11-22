@@ -39,9 +39,20 @@
   </div>
 </div>
 
+<div id="preview" class="preview hidden">
+  <div class="pv-head">
+    <div class="pv-name" id="pv-name">—</div>
+    <button id="pv-extern" class="btn ghost small">外部打开</button>
+    <button id="pv-close" class="close">✕</button>
+  </div>
+  <div id="pv-body" class="pv-body"></div>
+</div>
+
 <div id="toast" class="toast hidden"></div>
 
 <script src="./vendor/d3.min.js"></script>
+<script src="./vendor/marked.min.js"></script>
+<script src="./vendor/pdf.min.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>

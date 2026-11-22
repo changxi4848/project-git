@@ -1247,6 +1247,37 @@
     "状态": "待录"
    },
    "parent": "q9"
+  },
+  {
+   "id": "r_pdf",
+   "project": "p_relay",
+   "type": "doc",
+   "title": "试错记录（PDF 版）",
+   "summary": "把 44 条试错整理成可打印的 PDF",
+   "content_at": "2026-11-18",
+   "ingest_at": "2026-11-22T23:00",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "source": {
+    "file": "中继底座-试错记录.pdf",
+    "locator": {
+     "kind": "pdf",
+     "page": 2,
+     "rect": [
+      60,
+      300,
+      520,
+      360
+     ]
+    },
+    "excerpt": "广播名改 TourBox Elite Plus"
+   },
+   "extra": {
+    "要点": "归档版"
+   },
+   "parent": "r2"
   }
  ],
  "edges": [
@@ -1564,6 +1595,11 @@
    "from": "d6",
    "to": "d12",
    "kind": "uses"
+  },
+  {
+   "from": "r_pdf",
+   "to": "r2",
+   "kind": "derived"
   }
  ],
  "queue": [],

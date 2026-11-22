@@ -101,3 +101,41 @@ textarea:focus, input:focus{border-color:#4a465f}
 ::-webkit-scrollbar{width:9px}
 ::-webkit-scrollbar-thumb{background:#333338; border-radius:5px}
 ::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- 应用内预览 ---------- */
+.preview{
+  position:fixed; top:44px; right:0; bottom:0; width:560px; max-width:72vw; z-index:25;
+  background:#1c1c20; border-left:1px solid var(--line); display:flex; flex-direction:column;
+  box-shadow:-12px 0 40px rgba(0,0,0,.35);
+}
+.preview.hidden{display:none}
+.pv-head{display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--line)}
+.pv-name{flex:1; font-size:12.5px; color:#d9dce2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.pv-body{flex:1; overflow:auto; padding:16px 18px 40px}
+.pv-body img{max-width:100%; display:block; border-radius:6px; margin:0 auto}
+.pv-body canvas{display:block; margin:0 auto; background:#fff; border-radius:4px; max-width:100%; height:auto}
+.pv-body .pdfwrap{position:relative; display:block; max-width:100%; overflow:auto; line-height:0}
+.pv-body .pdfhl{position:absolute; border:2px solid #e06c62; background:rgba(224,108,98,.16); border-radius:2px; pointer-events:none}
+.pv-body .pagenav{display:flex; gap:8px; align-items:center; justify-content:center; margin:10px 0 0; color:#8b9098; font-size:12px}
+/* markdown */
+.md{font-size:13px; line-height:1.85; color:#c9cdd4}
+.md h1,.md h2,.md h3{color:#eef0f4; margin:18px 0 8px; line-height:1.4}
+.md h1{font-size:19px} .md h2{font-size:16px} .md h3{font-size:14px}
+.md p{margin:8px 0}
+.md ul,.md ol{margin:8px 0 8px 20px}
+.md code{background:#26262b; padding:1px 5px; border-radius:4px; font-family:Consolas,monospace; font-size:12px}
+.md pre{background:#17171a; border:1px solid #2b2b31; border-radius:7px; padding:10px 12px; overflow:auto}
+.md pre code{background:none; padding:0}
+.md blockquote{border-left:3px solid #3f3f47; margin:10px 0; padding:2px 12px; color:#9aa0a9}
+.md table{border-collapse:collapse; margin:10px 0; font-size:12px}
+.md th,.md td{border:1px solid #33333a; padding:5px 8px}
+.md hr{border:0; border-top:1px solid #2f2f36; margin:16px 0}
+.md mark{background:#5a4a16; color:#ffe6a8; padding:0 2px; border-radius:2px}
+.md a{color:#8ea8ff}
+/* 代码 / 纯文本 */
+.codewrap{display:flex; font-family:Consolas,"Microsoft YaHei",monospace; font-size:12px; line-height:1.65}
+.ln{flex:0 0 44px; text-align:right; padding-right:10px; color:#5d646e; user-select:none}
+.code{flex:1; white-space:pre-wrap; word-break:break-word; color:#c4c9d1}
+.code mark, .txtmark{background:#5a4a16; color:#ffe6a8; border-radius:2px}
+.plain{white-space:pre-wrap; font-size:12.5px; line-height:1.8; color:#c4c9d1}
+.plain mark{background:#5a4a16; color:#ffe6a8; border-radius:2px}
