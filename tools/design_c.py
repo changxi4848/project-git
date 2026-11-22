@@ -27,6 +27,10 @@ Y_RES = 3.55
 ax.text(0.62, 8.95, "方案 C · Git 式提交图", fontsize=16.5, fontweight="bold", color=INK)
 ax.text(0.62, 8.58, "主干＝主线提交；分叉＝一次尝试；×＝尝试终止；双线汇合＝被采纳；小旗＝里程碑；虚线框＝这次提交带的材料",
         fontsize=9.4, color=MUT)
+ax.text(15.85, 8.95, "主线 6 次提交 · 分支 2 条（1 条终止、1 条合并）", fontsize=8.6, color=DIM, ha="right")
+
+# 主干底带
+ax.add_patch(Rectangle((0.55, Y_MAIN - 1.15), 15.3, 1.62, facecolor="#F7FAFC", edgecolor="none", zorder=0))
 
 # ---------------- 时间刻度 ----------------
 for x, lab in [(1.5, "2026-08"), (4.1, "09"), (6.4, "10"), (9.4, "11"), (13.2, "12")]:
@@ -94,14 +98,15 @@ for x, t in [(2.42, "按 Plus 的 HID 试"), (4.22, "卡在「正在连接」"),
     ax.text(x, Y_MAIN + 0.20, t, fontsize=8.2, color=MUT, ha="center", va="bottom", zorder=5,
             bbox=dict(boxstyle="round,pad=0.24", facecolor="white", edgecolor="none"))
 
-for x, kind, name, sub in main:
+for idx, (x, kind, name, sub) in enumerate(main, 1):
     commit(x, Y_MAIN, kind, DEC if kind == "decision" else "#C08A3E")
+    ax.text(x - 0.22, Y_MAIN + 0.20, str(idx), fontsize=8, color="#B9C2CB", ha="right", va="bottom", zorder=9)
     ax.text(x, Y_MAIN - 0.30, name, fontsize=9.6, color=INK, ha="center", va="top", fontweight="bold", zorder=9)
     ax.text(x, Y_MAIN - 0.54, sub, fontsize=8.2, color=MUT, ha="center", va="top", zorder=9)
 
 # ---------------- 分支 1：走 HID（终止） ----------------
 bx0, bx1 = 1.50, 3.05
-ax.plot([bx0, bx0 + 0.42, bx1], [Y_MAIN, Y_BR1, Y_BR1], color=GREY, lw=1.6, zorder=2,
+ax.plot([bx0, bx0 + 0.42, bx1], [Y_MAIN, Y_BR1, Y_BR1], color="#A8B4C0", lw=1.7, zorder=2,
         solid_capstyle="round", solid_joinstyle="round")
 commit(bx1, Y_BR1, "decision", GREY, r=0.115, dead=True)
 ax.text(bx1, Y_BR1 - 0.26, "先走 HID 流", fontsize=9, color="#8A939E", ha="center", va="top", zorder=9)
