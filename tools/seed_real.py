@@ -218,6 +218,28 @@ edges.append({"from": "t6", "to": "t7", "kind": "uses"})    # 协议文档 → �
 edges.append({"from": "d5", "to": "d9", "kind": "uses"})    # 弹幕语料 → 检索链路 v2
 edges.append({"from": "d6", "to": "d12", "kind": "uses"})   # 标注集 → 答辩复盘
 
+# —— 分支与合并（对应设计稿里的 feat/hid 与 feat/pcb）——
+for n in out_nodes:
+    n["branch"] = "main"
+    n["parents"] = [n["parent"]] if n.get("parent") else []
+byid = {n["id"]: n for n in out_nodes}
+# 里程碑 tag（对应设计稿的小旗）
+if "r14" in byid:
+    byid["r14"]["tag"] = "b6677ef"
+# 走 HID 的分支：从“让 NEO 冒充 Elite”分出，终止
+if "r9" in byid:
+    byid["r9"]["branch"] = "feat/hid"
+    byid["r9"]["parents"] = ["r1"]
+    byid["r9"]["status"] = "abandoned"
+# PCB 打样：从“锁定基线”分出，合并进“改板”
+if "r15" in byid:
+    byid["r15"]["branch"] = "feat/pcb"
+    byid["r15"]["parents"] = ["r14"]
+if "r16" in byid:
+    byid["r16"]["parents"] = ["r14", "r15"]
+edges = [e for e in edges if not (e["from"] == "r15" and e["kind"] == "derived")]
+edges.append({"from": "r15", "to": "r14", "kind": "derived"})
+
 state = {
     "projects": projects, "types": types,
     "nodes": out_nodes, "edges": edges,
