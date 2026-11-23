@@ -16,7 +16,7 @@
 ## 生成这些文件
 
 ```bash
-python tools/design_c.py     # 重新生成 图-主视图.png
+python tools/design_d.py     # 重新生成 图-主视图.png（卡片式提交图）
 python tools/arch_fig.py     # 重新生成 图-架构.png
 python tools/soft_doc.py     # 重新生成设计稿 docx（会嵌入上面两张图）
 python tools/seed_real.py    # 重新生成演示数据
