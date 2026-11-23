@@ -1,23 +1,26 @@
 'use strict';
-/* 项目Git · 提交图（按设计稿 design-C）
-   主干 = 决策链；分叉 = 一次尝试；× = 终止；汇合 = 合并；tag = 里程碑；虚线框 = 材料
-*/
+/* 项目Git · 卡片式提交图（固定布局）+ 详情 + 预览 + AI 指令总线 */
 
 const $ = (s) => document.querySelector(s);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
 const COLOR = {
   decision: '#D9534F', output: '#C08A3E', plan: '#3F8FC4', retro: '#7C6BC4',
   doc: '#A1785A', data: '#3F9D94', code: '#5F7590',
 };
-const GREY = '#B9C2CB';
 const TYPE_NAME = { decision: '决策', output: '产出', plan: '方案', retro: '复盘', doc: '资料', data: '数据', code: '代码' };
 
+const CARD_W = 230, CARD_H1 = 96, CARD_H2 = 118, CARD_R = 10;
+const MAT_H = 46, MAT_GAP = 6;
+const GAP_X = 104, GAP_Y = 150;
+
 let S = { projects: [], types: [], nodes: [], edges: [] };
-let ns = [], ls = [], byId = new Map();
+let model = { items: [], links: [], byId: new Map(), bounds: null };
 let canvas, ctx, W = 0, H = 0, dpr = 1;
 const cam = { x: 0, y: 0, k: 1 };
-let curProject = null, selected = null, hovered = null, focus = null;
-let dragNode = null, panning = null, movedFar = false, anim = null, pvNode = null;
+let curProject = null, selected = null, hovered = null, pvNode = null;
+let panning = null, lastPointer = { x: 0, y: 0 };
+let LOCKED = true;   // 固定布局：不可拖动节点
 
 const msOf = (s) => { const t = Date.parse((s || '').length <= 7 ? s + '-01' : (s || '').replace('T', ' ')); return isNaN(t) ? 0 : t; };
 const typeName = (id) => (S.types.find((t) => t.id === id) || { name: TYPE_NAME[id] || id }).name;
@@ -36,6 +39,7 @@ async function boot() {
   curProject = (S.projects.find((p) => p.id === 'p_relay') || first || S.projects[0] || {}).id;
   renderTabs(); resize(); rebuild();
   window.addEventListener('resize', () => { resize(); draw(); });
+  installAI();
 }
 
 function renderTabs() {
@@ -45,28 +49,51 @@ function renderTabs() {
     const b = document.createElement('button');
     b.className = 'tab' + (p.id === curProject ? ' on' : '');
     b.textContent = p.name;
-    b.onclick = () => { curProject = p.id; selected = null; hidePanel(); renderTabs(); rebuild(); };
+    b.onclick = () => setProject(p.id);
     box.appendChild(b);
   });
 }
 
-/* ================= 布局 ================= */
-const X_GAP = 300;      // 主干提交间距
-const BR_GAP = 210;     // 分支提交间距
-const LANE_H = 150;     // 分支泳道高
-const BOX_TOP = 120;    // 材料框距主干
+function setProject(id) {
+  curProject = id; selected = null; hovered = null;
+  $('#panel').classList.add('hidden');
+  renderTabs(); rebuild();
+}
+
+/* ================= 布局（固定、确定性） ================= */
+function wrapText(text, maxW, font) {
+  ctx.save(); ctx.font = font;
+  const lines = []; let cur = '';
+  for (const ch of text) {
+    const t = cur + ch;
+    if (ctx.measureText(t).width > maxW && cur) {
+      if (/[A-Za-z0-9]$/.test(cur) && /[A-Za-z0-9-]/.test(ch)) {
+        const cut = cur.lastIndexOf(' ');
+        if (cut > 0) { lines.push(cur.slice(0, cut)); cur = cur.slice(cut + 1) + ch; continue; }
+      }
+      lines.push(cur); cur = ch;
+      if (lines.length >= 2) { cur = ''; break; }
+    } else cur = t;
+  }
+  if (cur && lines.length < 2) lines.push(cur);
+  ctx.restore();
+  return lines.length ? lines : [text];
+}
+
+function cardHeight(title) {
+  const lines = wrapText(title, CARD_W - 62, '600 15px "Microsoft YaHei"');
+  return lines.length > 1 ? CARD_H2 : CARD_H1;
+}
 
 function rebuild() {
   const vn = S.nodes.filter((n) => n.status !== 'deleted' && n.project === curProject);
   const byNid = new Map(vn.map((n) => [n.id, n]));
-  const TRUNK = new Set(['decision', 'output']);
+  const TRUNK_TYPES = new Set(['decision', 'output']);
 
-  // 1) 主干
-  const trunk = vn.filter((n) => (TRUNK.has(n.type) || (n.type === 'plan' && !n.parent)) && (n.branch || 'main') === 'main')
+  const trunk = vn.filter((n) => (TRUNK_TYPES.has(n.type) || (n.type === 'plan' && !n.parent)) && (n.branch || 'main') === 'main')
     .sort((a, b) => msOf(a.content_at) - msOf(b.content_at));
   const trunkSet = new Set(trunk.map((n) => n.id));
 
-  // 2) 分支（显式 branch）
   const branches = new Map();
   vn.forEach((n) => {
     const b = n.branch || 'main';
@@ -75,41 +102,46 @@ function rebuild() {
     branches.get(b).push(n);
   });
 
-  ns = [];
-  // 主干坐标
-  trunk.forEach((n, i) => {
-    ns.push({ id: n.id, n, kind: 'commit', x: i * X_GAP, y: 0, r: n.type === 'output' ? 11 : 12 });
+  const items = [], byId = new Map();
+  let x = 0;
+  trunk.forEach((n) => {
+    const h = cardHeight(n.title);
+    const it = { id: n.id, n, kind: 'commit', x: x + CARD_W / 2, y: 0, w: CARD_W, h };
+    items.push(it); byId.set(n.id, it);
+    x += CARD_W + GAP_X;
   });
-  const tx = new Map(trunk.map((n, i) => [n.id, i * X_GAP]));
+  const trunkX = new Map(trunk.map((n) => [n.id, byId.get(n.id).x]));
 
-  // 分支坐标（全部向上，多分支依次加高）
+  // 分支：向上一条泳道
+  const binfo = [];
   let lane = 1;
-  const branchInfo = [];
   [...branches.entries()].forEach(([name, list]) => {
     const sorted = list.slice().sort((a, b) => msOf(a.content_at) - msOf(b.content_at));
-    const pnode = byNid.get(sorted[0].parent);
-    const startX = (pnode && tx.has(pnode.id)) ? tx.get(pnode.id) : 0;
-    const y = -lane * LANE_H;
-    sorted.forEach((n, i) => {
-      ns.push({ id: n.id, n, kind: 'branch', x: startX + 90 + i * BR_GAP, y, r: 10 });
+    const p = byNid.get(sorted[0].parent);
+    const startX = p && trunkX.has(p.id) ? trunkX.get(p.id) : 0;
+    const y = -lane * GAP_Y;
+    let bx = startX + 170;
+    sorted.forEach((n) => {
+      const h = cardHeight(n.title);
+      const it = { id: n.id, n, kind: 'branch', x: bx, y, w: CARD_W, h };
+      items.push(it); byId.set(n.id, it);
+      bx += CARD_W + GAP_X * 0.7;
     });
     const last = sorted[sorted.length - 1];
-    branchInfo.push({ name, startX, y, list: sorted, endX: startX + 90 + (sorted.length - 1) * BR_GAP, last });
+    binfo.push({ name, startX, y, endX: bx - GAP_X * 0.7 - CARD_W / 2, last });
     lane++;
   });
 
-  // 3) 材料：doc/data/code/plan/retro 挂到最近的祖先主干
-  const materialTypes = new Set(['doc', 'data', 'code', 'plan', 'retro']);
+  // 材料
+  const MAT_TYPES = new Set(['doc', 'data', 'code', 'plan', 'retro']);
   const mats = new Map();
   vn.forEach((n) => {
-    if (!materialTypes.has(n.type)) return;
-    if (trunkSet.has(n.id)) return;   // 主干节点不能挂成自己的材料
-    if (branches.size && [...branches.values()].some((l) => l.includes(n))) return;
+    if (!MAT_TYPES.has(n.type) || trunkSet.has(n.id)) return;
+    if ([...branches.values()].some((l) => l.includes(n))) return;
     let p = byNid.get(n.parent), guard = 0, owner = null;
     while (p && guard++ < 20) { if (trunkSet.has(p.id)) { owner = p.id; break; } p = byNid.get(p.parent); }
     if (!owner) {
-      const t = msOf(n.content_at);
-      let best = null, bd = Infinity;
+      const t = msOf(n.content_at); let best = null, bd = Infinity;
       trunk.forEach((c) => { const d = Math.abs(msOf(c.content_at) - t); if (d < bd) { bd = d; best = c; } });
       owner = best && best.id;
     }
@@ -118,25 +150,23 @@ function rebuild() {
     mats.get(owner).push(n);
   });
 
-  // 材料框排布（每个主干下最多 3 条，超出显示 +N）
   const boxes = [];
-  const ROW = 44;
   mats.forEach((list, ownerId) => {
-    const cx = tx.get(ownerId);
+    const cx = trunkX.get(ownerId);
+    const topCard = byId.get(ownerId);
+    const top = topCard.y + topCard.h / 2 + 26;
     const show = list.slice(0, 3);
-    const h = ROW * show.length + (list.length > show.length ? 36 : 18);
-    boxes.push({ ownerId, cx, y: BOX_TOP, h, w: 196, items: show, more: list.length - show.length });
+    const hh = show.length * (MAT_H + MAT_GAP) + 12 + (list.length > show.length ? 18 : 0);
+    boxes.push({ cx, top, h: hh, w: CARD_W, items: show, more: list.length - show.length });
     show.forEach((n, i) => {
-      ns.push({ id: n.id, n, kind: 'material', x: cx - 72, y: BOX_TOP + 26 + i * ROW, r: 6 });
+      const it = { id: n.id, n, kind: 'material', x: cx - CARD_W / 2 + 18, y: top + 12 + i * (MAT_H + MAT_GAP) + MAT_H / 2, w: CARD_W - 30, h: MAT_H };
+      items.push(it); byId.set(n.id, it);
     });
   });
 
-  byId = new Map(ns.map((d) => [d.id, d]));
-  L = { trunk, branchInfo, boxes, tx };
+  model = { items, byId, trunk, binfo, boxes };
   draw(); fit();
 }
-
-let L = { trunk: [], branchInfo: [], boxes: [], tx: new Map() };
 
 /* ================= 相机 ================= */
 function resize() {
@@ -144,250 +174,309 @@ function resize() {
   W = canvas.clientWidth; H = canvas.clientHeight;
   canvas.width = W * dpr; canvas.height = H * dpr;
 }
+
+function bounds() {
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  model.items.forEach((it) => {
+    x0 = Math.min(x0, it.x - it.w / 2); x1 = Math.max(x1, it.x + it.w / 2);
+    y0 = Math.min(y0, it.y - it.h / 2); y1 = Math.max(y1, it.y + it.h / 2);
+  });
+  model.boxes.forEach((b) => { y1 = Math.max(y1, b.top + b.h); });
+  return { x0, x1, y0, y1 };
+}
+
 function fit() {
-  if (!ns.length) return;
-  const xs = ns.map((d) => d.x), ys = ns.map((d) => d.y);
-  const minX = Math.min(...xs) - 140, maxX = Math.max(...xs) + 260;
-  const minY = Math.min(...ys) - 90, maxY = Math.max(...ys) + 210;
-  const k = clamp(Math.min(W / (maxX - minX), H / (maxY - minY)), 0.25, 1.5);
+  if (!model.items.length) return;
+  const b = bounds();
+  const padX = 70, padY = 90;
+  const k = clamp(Math.min(W / (b.x1 - b.x0 + padX * 2), H / (b.y1 - b.y0 + padY * 2)), 0.25, 1.6);
   cam.k = k;
-  cam.x = W / 2 - ((minX + maxX) / 2) * k;
-  cam.y = H / 2 - ((minY + maxY) / 2) * k;
+  cam.x = W / 2 - ((b.x0 + b.x1) / 2) * k;
+  cam.y = H / 2 - ((b.y0 + b.y1) / 2) * k;
   draw();
 }
+
 function toWorld(sx, sy) { return [(sx - cam.x) / cam.k, (sy - cam.y) / cam.k]; }
 
 /* ================= 绘制 ================= */
 function icon(kind, x, y, s, color) {
-  ctx.save();
-  ctx.fillStyle = color; ctx.strokeStyle = color;
+  ctx.save(); ctx.fillStyle = color; ctx.strokeStyle = color;
   if (kind === 'decision') {
     ctx.beginPath();
     ctx.moveTo(x, y - s); ctx.lineTo(x + s, y); ctx.lineTo(x, y + s); ctx.lineTo(x - s, y);
     ctx.closePath(); ctx.fill();
-  } else if (kind === 'output') {
-    ctx.beginPath();
-    for (let i = 0; i < 10; i++) {
-      const a = Math.PI / 5 * i - Math.PI / 2;
-      const rr = i % 2 === 0 ? s : s * 0.45;
-      const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr;
-      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
-    }
-    ctx.closePath(); ctx.fill();
+  } else if (kind === 'data') {
+    ctx.beginPath(); ctx.ellipse(x, y - s * 0.55, s * 0.8, s * 0.3, 0, 0, 7); ctx.fill();
+    ctx.fillRect(x - s * 0.8, y - s * 0.55, s * 1.6, s * 1.1);
+    ctx.beginPath(); ctx.ellipse(x, y + s * 0.55, s * 0.8, s * 0.3, 0, 0, 7); ctx.fill();
   } else if (kind === 'doc') {
     ctx.beginPath();
     ctx.moveTo(x - s * 0.8, y + s); ctx.lineTo(x + s * 0.25, y + s);
-    ctx.lineTo(x + s * 0.8, y + s * 0.35); ctx.lineTo(x + s * 0.8, y - s);
+    ctx.lineTo(x + s * 0.8, y + s * 0.3); ctx.lineTo(x + s * 0.8, y - s);
     ctx.lineTo(x - s * 0.8, y - s); ctx.closePath(); ctx.fill();
-  } else if (kind === 'data') {
-    ctx.beginPath(); ctx.ellipse(x, y - s * 0.55, s * 0.75, s * 0.28, 0, 0, 7); ctx.fill();
-    ctx.fillRect(x - s * 0.75, y - s * 0.6, s * 1.5, s * 1.15);
-    ctx.beginPath(); ctx.ellipse(x, y + s * 0.55, s * 0.75, s * 0.28, 0, 0, 7); ctx.fill();
   } else if (kind === 'code') {
     ctx.lineWidth = s * 0.3; ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(x - s * 0.25, y - s * 0.5); ctx.lineTo(x - s * 0.7, y); ctx.lineTo(x - s * 0.25, y + s * 0.5);
     ctx.moveTo(x + s * 0.25, y - s * 0.5); ctx.lineTo(x + s * 0.7, y); ctx.lineTo(x + s * 0.25, y + s * 0.5);
     ctx.stroke();
-  } else if (kind === 'retro') {
-    ctx.lineWidth = s * 0.28; ctx.beginPath();
-    ctx.arc(x, y, s * 0.7, 0.7, 5.6); ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x + s * 0.62, y - s * 0.5); ctx.lineTo(x + s * 0.9, y - s * 0.05);
-    ctx.lineTo(x + s * 0.4, y - s * 0.02); ctx.closePath(); ctx.fill();
   } else {
-    ctx.beginPath(); ctx.arc(x, y, s * 0.7, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, s * 0.75, 0, 7); ctx.fill();
   }
   ctx.restore();
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawCard(it, hot) {
+  const { x, y, w, h, n } = it;
+  const dead = n.status === 'abandoned' || n.status === 'superseded';
+  const col = dead ? '#B9C2CB' : (COLOR[n.type] || '#8A97A5');
+  const x0 = x - w / 2, y0 = y - h / 2;
+
+  // 阴影
+  ctx.save(); ctx.fillStyle = 'rgba(16,24,40,0.06)';
+  roundRect(x0 + 2, y0 + 5, w, h, CARD_R); ctx.fill(); ctx.restore();
+
+  // 卡体
+  roundRect(x0, y0, w, h, CARD_R);
+  ctx.fillStyle = '#FFFFFF'; ctx.fill();
+  ctx.lineWidth = hot ? 2 : 1.2;
+  ctx.strokeStyle = col;
+  if (dead) ctx.setLineDash([5, 4]);
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // 左侧淡色带
+  ctx.save();
+  ctx.fillStyle = hexA(col, dead ? 0.04 : 0.10);
+  roundRect(x0 + 5, y0 + 8, 26, h - 16, 6); ctx.fill();
+  // 色条
+  ctx.fillStyle = col;
+  roundRect(x0 + 11, y0 + 14, 6, h - 28, 3); ctx.fill();
+  ctx.restore();
+
+  // 图标
+  ctx.save(); ctx.fillStyle = hexA(col, 0.16);
+  ctx.beginPath(); ctx.arc(x0 + 46, y, 15, 0, 7); ctx.fill(); ctx.restore();
+  icon(n.type, x0 + 46, y, 8, col);
+
+  // 标题
+  const lines = wrapText(n.title, w - 66, '600 15px "Microsoft YaHei"');
+  ctx.fillStyle = dead ? '#8D97A3' : '#111827';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.font = '600 15px "Microsoft YaHei"';
+  const titleTop = y - (lines.length * 21) / 2 - 4;
+  lines.forEach((ln, i) => ctx.fillText(ln, x0 + 64, titleTop + i * 21));
+
+  // 类型 + 日期（类型放大）
+  ctx.font = '700 14px "Microsoft YaHei"';
+  const tname = TYPE_NAME[n.type] || n.type;
+  ctx.fillStyle = dead ? '#9AA5B1' : col;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(tname, x0 + 64, y + h / 2 - 18);
+  const tw = ctx.measureText(tname).width;
+  ctx.font = '400 12px "Microsoft YaHei"';
+  ctx.fillStyle = '#8A97A5';
+  ctx.fillText('· ' + String(n.content_at).slice(5), x0 + 64 + tw + 8, y + h / 2 - 18);
+
+  // 状态徽标
+  if (dead || n.status === 'draft') {
+    const label = n.status === 'abandoned' ? '已放弃' : (n.status === 'superseded' ? '已取代' : '草稿');
+    ctx.font = '400 10px "Microsoft YaHei"';
+    const bw = ctx.measureText(label).width + 14;
+    roundRect(x0 + w - bw - 10, y0 + h - 30, bw, 20, 6);
+    ctx.fillStyle = '#F3F5F7'; ctx.fill();
+    ctx.strokeStyle = '#DCE2E9'; ctx.lineWidth = 0.8; ctx.stroke();
+    ctx.fillStyle = '#8D97A3'; ctx.textAlign = 'center';
+    ctx.fillText(label, x0 + w - bw / 2 - 10, y0 + h - 20);
+    ctx.textAlign = 'left';
+  }
+  // tag
+  if (n.tag) {
+    const label = 'tag ' + n.tag;
+    ctx.font = '400 10px Consolas,monospace';
+    const bw = ctx.measureText(label).width + 14;
+    roundRect(x0 + w - bw - 10, y0 + 8, bw, 20, 6);
+    ctx.fillStyle = '#FFF7E8'; ctx.fill();
+    ctx.strokeStyle = '#E0B96B'; ctx.lineWidth = 0.8; ctx.stroke();
+    ctx.fillStyle = '#A5751E'; ctx.textAlign = 'center';
+    ctx.fillText(label, x0 + w - bw / 2 - 10, y0 + 18);
+    ctx.textAlign = 'left';
+  }
+}
+
+function hexA(hex, a) {
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function drawMaterial(it) {
+  const { x, y, w, h, n } = it;
+  const col = COLOR[n.type] || '#8A97A5';
+  const x0 = x - w / 2, y0 = y - h / 2;
+  roundRect(x0, y0, w, h, 7);
+  ctx.fillStyle = '#FFFFFF'; ctx.fill();
+  ctx.strokeStyle = '#E7EDF3'; ctx.lineWidth = 1; ctx.stroke();
+  icon(n.type, x0 + 14, y, 6, col);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.font = '400 12px "Microsoft YaHei"';
+  ctx.fillStyle = '#111827';
+  ctx.fillText(fitText(n.title, w - 34), x0 + 26, y - 7);
+  ctx.font = '700 9.5px "Microsoft YaHei"';
+  const tn = TYPE_NAME[n.type] || n.type;
+  ctx.fillStyle = col;
+  ctx.fillText(tn, x0 + 26, y + 9);
+  const tw = ctx.measureText(tn).width;
+  ctx.font = '400 9.5px "Microsoft YaHei"';
+  ctx.fillStyle = '#9AA5B1';
+  ctx.fillText('· ' + n.content_at.slice(5), x0 + 26 + tw + 6, y + 9);
+}
+
+function fitText(s, maxW) {
+  if (ctx.measureText(s).width <= maxW) return s;
+  let t = s;
+  while (t.length > 2 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+  return t + '…';
 }
 
 function draw() {
   if (!ctx) return;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#FCFDFE'; ctx.fillRect(0, 0, W, H);
 
   ctx.save();
-  ctx.translate(cam.x, cam.y);
-  ctx.scale(cam.k, cam.k);
+  ctx.translate(cam.x, cam.y); ctx.scale(cam.k, cam.k);
 
-  const trunk = L.trunk || [];
-
-  // 主干底带
-  if (trunk.length > 1) {
-    const x0 = trunk[0] ? L.tx.get(trunk[0].id) : 0;
-    const x1 = L.tx.get(trunk[trunk.length - 1].id);
-    ctx.fillStyle = '#F8FAFC';
-    ctx.fillRect(x0 - 90, -92, (x1 - x0) + 180, 188);
-  }
-
-  // 主干线 + 叙事
+  const trunk = model.trunk || [];
+  // 主干线
   for (let i = 0; i < trunk.length - 1; i++) {
-    const a = L.tx.get(trunk[i].id), b = L.tx.get(trunk[i + 1].id);
-    ctx.strokeStyle = '#B9C6D3'; ctx.lineWidth = 2 / cam.k;
-    ctx.beginPath(); ctx.moveTo(a + 18, 0); ctx.lineTo(b - 18, 0); ctx.stroke();
-    const nxt = trunk[i + 1];
-    const label = (nxt.extra && nxt.extra['理由']) || '';
-    if (label) {
-      const t = label.length > 12 ? label.slice(0, 12) + '…' : label;
-      ctx.save();
-      ctx.font = `${10.5 / cam.k}px "Microsoft YaHei",sans-serif`;
-      const w = ctx.measureText(t).width + 10 / cam.k;
-      ctx.fillStyle = '#fff';
-      ctx.fillRect((a + b) / 2 - w / 2, -16 / cam.k, w, 16 / cam.k);
-      ctx.fillStyle = '#6B7A88'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(t, (a + b) / 2, -8 / cam.k);
-      ctx.restore();
+    const a = model.byId.get(trunk[i].id), b = model.byId.get(trunk[i + 1].id);
+    const y = 0;
+    ctx.strokeStyle = '#CBD5DF'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(a.x + CARD_W / 2, y); ctx.lineTo(b.x - CARD_W / 2, y); ctx.stroke();
+    // 箭头
+    ctx.beginPath();
+    ctx.moveTo(b.x - CARD_W / 2 - 1, y);
+    ctx.lineTo(b.x - CARD_W / 2 - 8, y - 4);
+    ctx.lineTo(b.x - CARD_W / 2 - 8, y + 4);
+    ctx.closePath(); ctx.fillStyle = '#CBD5DF'; ctx.fill();
+    // 过渡说明
+    const why = (trunk[i + 1].extra && trunk[i + 1].extra['理由']) || '';
+    if (why) {
+      ctx.font = '400 11px "Microsoft YaHei"';
+      const t = fitText(why, 120);
+      const tw = ctx.measureText(t).width + 14;
+      const mx = (a.x + b.x) / 2;
+      const ly = y - Math.max(a.h, b.h) / 2 - 26;
+      roundRect(mx - tw / 2, ly, tw, 22, 6);
+      ctx.fillStyle = '#F7F9FB'; ctx.fill();
+      ctx.strokeStyle = '#E9EEF3'; ctx.lineWidth = 0.8; ctx.stroke();
+      ctx.fillStyle = '#5B6673'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(t, mx, ly + 11);
+      ctx.textAlign = 'left';
     }
   }
 
   // 分支线
-  (L.branchInfo || []).forEach((b) => {
-    const from = b.startX;
-    ctx.strokeStyle = '#A8B4C0'; ctx.lineWidth = 1.7 / cam.k;
+  (model.binfo || []).forEach((b) => {
+    const from = model.byId.get(model.trunk[0].id);
+    ctx.strokeStyle = '#AEB9C5'; ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(from, -14); ctx.lineTo(from + 60, b.y); ctx.lineTo(b.endX, b.y);
+    ctx.moveTo(b.startX, -CARD_H1 / 2);
+    ctx.lineTo(b.startX + 46, b.y);
+    ctx.lineTo(b.endX + CARD_W / 2, b.y);
     ctx.stroke();
     if (b.last.status === 'abandoned') {
-      ctx.strokeStyle = '#C3CBD5'; ctx.setLineDash([4 / cam.k, 4 / cam.k]);
-      ctx.beginPath(); ctx.moveTo(b.endX + 12, b.y); ctx.lineTo(b.endX + 48, b.y); ctx.stroke();
+      ctx.strokeStyle = '#C3CBD5'; ctx.setLineDash([5, 4]);
+      ctx.beginPath(); ctx.moveTo(b.endX + CARD_W / 2 + 12, b.y); ctx.lineTo(b.endX + CARD_W / 2 + 42, b.y); ctx.stroke();
       ctx.setLineDash([]);
-      const x = b.endX + 52, s = 5 / cam.k;
-      ctx.strokeStyle = '#AEB8C4'; ctx.lineWidth = 1.8 / cam.k;
+      const tx = b.endX + CARD_W / 2 + 46;
+      ctx.strokeStyle = '#AEB8C4'; ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.moveTo(x - s, b.y - s); ctx.lineTo(x + s, b.y + s);
-      ctx.moveTo(x + s, b.y - s); ctx.lineTo(x - s, b.y + s);
+      ctx.moveTo(tx - 5, b.y - 5); ctx.lineTo(tx + 5, b.y + 5);
+      ctx.moveTo(tx + 5, b.y - 5); ctx.lineTo(tx - 5, b.y + 5);
       ctx.stroke();
-      ctx.save(); ctx.font = `${10 / cam.k}px "Microsoft YaHei",sans-serif`;
-      ctx.fillStyle = '#98A5B1'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-      ctx.fillText('尝试终止', x + 10 / cam.k, b.y);
-      ctx.restore();
+      ctx.font = '400 11px "Microsoft YaHei"'; ctx.fillStyle = '#98A5B1';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText('尝试终止', tx + 12, b.y);
     }
   });
 
-  // 合并：主干节点有两个父 → 从分支末点斜下汇入
-  trunk.forEach((n) => {
+  // 合并线
+  (model.trunk || []).forEach((n) => {
     const ps = (n.parents && n.parents.length) ? n.parents : (n.parent ? [n.parent] : []);
     if (ps.length < 2) return;
-    const info = (L.branchInfo || []).find((b) => ps.includes(b.last.id));
-    if (!info) return;
-    const x = L.tx.get(n.id);
-    ctx.strokeStyle = '#9DB4C7'; ctx.lineWidth = 1.7 / cam.k;
+    const it = model.byId.get(n.id);
+    const info = (model.binfo || []).find((b) => ps.includes(b.last.id));
+    if (!info || !it) return;
+    ctx.strokeStyle = '#9DB4C7'; ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(info.endX, info.y); ctx.lineTo(x - 60, info.y); ctx.lineTo(x - 14, 0);
+    ctx.moveTo(info.endX + CARD_W / 2, info.y);
+    ctx.lineTo(it.x - 60, info.y);
+    ctx.lineTo(it.x - CARD_W / 2 - 4, it.y - CARD_H1 / 2);
     ctx.stroke();
   });
 
-  // 材料虚线框
-  (L.boxes || []).forEach((bx) => {
-    const x = bx.cx - bx.w / 2;
-    ctx.strokeStyle = '#E2E8EE'; ctx.lineWidth = 1.2 / cam.k;
-    ctx.setLineDash([5 / cam.k, 4 / cam.k]);
-    ctx.beginPath();
-    ctx.roundRect(x, bx.y, bx.w, bx.h, 8 / cam.k);
-    ctx.stroke(); ctx.setLineDash([]);
-    ctx.beginPath(); ctx.moveTo(bx.cx, 22); ctx.lineTo(bx.cx, bx.y); ctx.stroke();
-    if (bx.more > 0) {
-      ctx.fillStyle = '#98A5B1'; ctx.font = `${10 / cam.k}px "Microsoft YaHei",sans-serif`;
-      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-      ctx.fillText('+' + bx.more + ' 项', x + 12, bx.y + bx.h - 14 / cam.k);
-    }
-  });
-
-  ctx.restore();
-
-  // 节点（屏幕空间画标签，形状在世界里画）
-  ctx.save();
-  ctx.translate(cam.x, cam.y); ctx.scale(cam.k, cam.k);
-  ns.forEach((d) => {
-    if (d.kind === 'material') {
-      const mc = COLOR[d.n.type] || '#8A97A5';
-      ctx.beginPath(); ctx.arc(d.x, d.y, 6, 0, 7); ctx.fillStyle = mc; ctx.fill();
-      icon(d.n.type, d.x, d.y, 3.6, '#fff');
-      return;
-    }
-    const dead = d.n.status === 'abandoned' || d.n.status === 'superseded';
-    const col = dead ? GREY : (COLOR[d.n.type] || '#8A97A5');
-    const hot = hovered === d.id || selected === d.id;
-    ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, 7);
-    ctx.fillStyle = col; ctx.fill();
-    ctx.lineWidth = (hot ? 2 : 1.6) / cam.k; ctx.strokeStyle = '#fff'; ctx.stroke();
-    icon(d.n.type, d.x, d.y, d.r * 0.58, '#fff');
-    if (d.n.tag) {
-      const tw = 78 / cam.k, th = 18 / cam.k;
-      ctx.fillStyle = '#FFF7E8'; ctx.strokeStyle = '#E0B96B'; ctx.lineWidth = 1 / cam.k;
-      ctx.beginPath(); ctx.roundRect(d.x + 14 / cam.k, d.y - 40 / cam.k, tw, th, 3 / cam.k);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#A5751E'; ctx.font = `${9.5 / cam.k}px Consolas,monospace`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('tag ' + d.n.tag, d.x + 14 / cam.k + tw / 2, d.y - 40 / cam.k + th / 2);
-    }
-  });
-  ctx.restore();
-
-  // 标签（屏幕空间）
-  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  ns.forEach((d) => {
-    const [sx, sy] = [d.x * cam.k + cam.x, d.y * cam.k + cam.y];
-    if (sx < -200 || sx > W + 200 || sy < 0 || sy > H + 60) return;
-    const on = !focus || focus.has(d.id);
-    const dead = d.n.status === 'abandoned' || d.n.status === 'superseded';
-    if (d.kind === 'material') {
-      ctx.globalAlpha = on ? 1 : 0.2;
+  // 材料容器
+  (model.boxes || []).forEach((b) => {
+    roundRect(b.cx - b.w / 2, b.top, b.w, b.h, 8);
+    ctx.fillStyle = '#FBFCFD'; ctx.fill();
+    ctx.strokeStyle = '#EEF2F6'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.strokeStyle = '#E7EDF3';
+    ctx.beginPath(); ctx.moveTo(b.cx, b.top - 12); ctx.lineTo(b.cx, b.top); ctx.stroke();
+    if (b.more > 0) {
+      const label = '+' + b.more + ' 项';
+      ctx.font = '400 10px "Microsoft YaHei"';
+      const lw2 = ctx.measureText(label).width + 14;
+      roundRect(b.cx + b.w / 2 - lw2 - 8, b.top + b.h - 20, lw2, 16, 5);
+      ctx.fillStyle = '#F1F4F7'; ctx.fill();
+      ctx.fillStyle = '#8A97A5'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(label, b.cx + b.w / 2 - lw2 / 2 - 8, b.top + b.h - 12);
       ctx.textAlign = 'left';
-      ctx.font = '11px "Microsoft YaHei",sans-serif';
-      ctx.fillStyle = '#374151';
-      ctx.fillText(d.n.title.length > 13 ? d.n.title.slice(0, 13) + '…' : d.n.title, sx + 12, sy - 13);
-      ctx.font = '9.5px "Microsoft YaHei",sans-serif';
-      ctx.fillStyle = '#98A5B1';
-      ctx.fillText(`${TYPE_NAME[d.n.type] || ''} · ${d.n.content_at.slice(5)}`, sx + 12, sy + 2);
-      ctx.textAlign = 'center';
-      ctx.globalAlpha = 1;
-      return;
     }
-    ctx.globalAlpha = on ? 1 : 0.25;
-    const main = d.kind === 'commit';
-    ctx.font = `${main ? 600 : 400} ${main ? 12.5 : 11.5}px "Microsoft YaHei",sans-serif`;
-    ctx.fillStyle = dead ? '#9AA5B1' : '#1F2933';
-    const t = d.n.title.length > (main ? 16 : 14) ? d.n.title.slice(0, main ? 16 : 14) + '…' : d.n.title;
-    ctx.fillText(t, sx, sy + d.r * cam.k + 10);
-    ctx.font = `${main ? 10 : 9.5}px "Microsoft YaHei",sans-serif`;
-    ctx.fillStyle = '#8A97A5';
-    const sub = `${TYPE_NAME[d.n.type] || ''} · ${d.n.content_at}${d.n.status === 'abandoned' ? ' · 已放弃' : ''}`;
-    ctx.fillText(sub, sx, sy + d.r * cam.k + 26);
-    ctx.globalAlpha = 1;
   });
+
+  // 项目内所有条目
+  model.items.forEach((it) => {
+    if (it.kind === 'material') drawMaterial(it);
+    else drawCard(it, hovered === it.id || selected === it.id);
+  });
+
+  ctx.restore();
 }
 
 /* ================= 交互 ================= */
 function pick(sx, sy) {
   const [wx, wy] = toWorld(sx, sy);
-  for (let i = ns.length - 1; i >= 0; i--) {
-    const d = ns[i];
-    const rr = d.kind === 'material' ? 9 : d.r + 6;
-    if ((wx - d.x) ** 2 + (wy - d.y) ** 2 <= rr ** 2) return d;
+  const list = model.items;
+  for (let i = list.length - 1; i >= 0; i--) {
+    const it = list[i];
+    if (wx >= it.x - it.w / 2 && wx <= it.x + it.w / 2 && wy >= it.y - it.h / 2 && wy <= it.y + it.h / 2) return it;
   }
   return null;
-}
-function setFocus(id) {
-  if (!id) { focus = null; return; }
-  const set = new Set([id]);
-  S.edges.forEach((e) => { if (e.from === id) set.add(e.to); else if (e.to === id) set.add(e.from); });
-  focus = set;
 }
 
 function bindUI() {
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
-    const k2 = clamp(cam.k * Math.exp(-e.deltaY * 0.0015), 0.2, 3);
+    const k2 = clamp(cam.k * Math.exp(-e.deltaY * 0.0012), 0.2, 3);
     const [wx, wy] = toWorld(e.offsetX, e.offsetY);
     cam.k = k2; cam.x = e.offsetX - wx * k2; cam.y = e.offsetY - wy * k2;
     draw();
   }, { passive: false });
 
   canvas.addEventListener('mousedown', (e) => {
-    const d = pick(e.offsetX, e.offsetY);
-    movedFar = false;
-    if (d) { dragNode = { d, sx: e.offsetX, sy: e.offsetY }; return; }
+    lastPointer = { x: e.offsetX, y: e.offsetY };
+    const it = pick(e.offsetX, e.offsetY);
+    if (it) { select(it.id); return; }
     panning = { x: e.offsetX - cam.x, y: e.offsetY - cam.y };
   });
 
@@ -395,24 +484,20 @@ function bindUI() {
     const r = canvas.getBoundingClientRect();
     const sx = e.clientX - r.left, sy = e.clientY - r.top;
     if (panning) { cam.x = sx - panning.x; cam.y = sy - panning.y; draw(); return; }
-    if (dragNode) {
-      if (Math.hypot(sx - dragNode.sx, sy - dragNode.sy) > 3) movedFar = true;
-      const [wx, wy] = toWorld(sx, sy);
-      dragNode.d.x = wx; dragNode.d.y = wy;
-      draw(); return;
+    const it = pick(sx, sy);
+    const id = it ? it.id : null;
+    if (id !== hovered) {
+      hovered = id;
+      canvas.style.cursor = id ? 'pointer' : 'default';
+      draw();
     }
-    const d = pick(sx, sy);
-    const id = d ? d.id : null;
-    if (id !== hovered) { hovered = id; setFocus(id || selected); draw(); }
   });
 
-  window.addEventListener('mouseup', () => {
-    if (dragNode) { if (!movedFar) select(dragNode.d.id); dragNode = null; }
-    panning = null;
-  });
+  window.addEventListener('mouseup', () => { panning = null; });
+
   canvas.addEventListener('dblclick', (e) => {
-    const d = pick(e.offsetX, e.offsetY);
-    if (d) { cam.k = Math.min(2, cam.k * 1.5); cam.x = W / 2 - d.x * cam.k; cam.y = H / 2 - d.y * cam.k; draw(); }
+    const it = pick(e.offsetX, e.offsetY);
+    if (it) openPreview(S.nodes.find((n) => n.id === it.id));
   });
 
   $('#btn-capture').onclick = () => { $('#modal').classList.remove('hidden'); $('#m-date').valueAsDate = new Date(); $('#m-text').focus(); };
@@ -424,89 +509,137 @@ function bindUI() {
   const pve = document.getElementById('pv-extern');
   if (pve) pve.onclick = () => { if (pvNode) window.api.openFileExtern({ nodeId: pvNode.id }); };
   const pc = document.getElementById('p-close');
-  if (pc) pc.onclick = hidePanel;
+  if (pc) pc.onclick = () => { selected = null; $('#panel').classList.add('hidden'); draw(); };
 
   $('#search').addEventListener('input', (e) => { clearTimeout(window._st); window._st = setTimeout(() => doSearch(e.target.value), 200); });
-  $('#search').addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.target.value = ''; setFocus(null); $('#search-hint').classList.remove('on'); draw(); } });
+  $('#search').addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.target.value = ''; $('#search-hint').classList.remove('on'); draw(); }
+  });
 
   document.addEventListener('keydown', (e) => {
     if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-    if (e.key === 'Escape') { hidePanel(); closePreview(); }
+    if (e.key === '/') { e.preventDefault(); $('#search').focus(); }
+    if (e.key === 'Escape') { $('#panel').classList.add('hidden'); $('#preview').classList.add('hidden'); selected = null; draw(); }
     if (e.key === 'f' || e.key === 'F') fit();
   });
 }
 
-function hidePanel() {
-  $('#panel').classList.add('hidden');
-  selected = null; focus = null; draw();
+/* ================= 详情 ================= */
+function relation(id) {
+  const n = S.nodes.find((x) => x.id === id);
+  if (!n) return { prev: null, next: null };
+  const parents = (n.parents && n.parents.length) ? n.parents : (n.parent ? [n.parent] : []);
+  const prevId = parents[0];
+  const prev = prevId ? S.nodes.find((x) => x.id === prevId) : null;
+  const nextCandidates = S.edges.filter((e) => e.kind === 'derived' && e.to === id)
+    .map((e) => S.nodes.find((x) => x.id === e.from))
+    .filter((x) => x && x.project === n.project)
+    .sort((a, b) => msOf(a.content_at) - msOf(b.content_at));
+  const next = nextCandidates[0] || null;
+  return { prev, next };
 }
 
 function select(id) {
   const n = S.nodes.find((x) => x.id === id);
   if (!n) return;
-  selected = id; setFocus(id); draw();
-  $('#p-title').textContent = n.title;
-  $('#p-meta').textContent = `${typeName(n.type)} · ${n.content_at}${n.tag ? ' · tag ' + n.tag : ''}`;
-  const body = $('#p-body'); body.innerHTML = '';
-  if (n.summary) body.appendChild(Object.assign(document.createElement('div'), { className: 'summary', textContent: n.summary }));
+  selected = id; draw();
 
+  $('#p-title').textContent = n.title;
+  $('#p-meta').textContent = `${TYPE_NAME[n.type] || n.type} · ${n.content_at}` +
+    (n.tag ? ` · tag ${n.tag}` : '') + (n.status === 'abandoned' ? ' · 已放弃' : '');
+
+  const body = $('#p-body'); body.innerHTML = '';
+
+  // 简介
+  body.appendChild(h4('简介'));
+  body.appendChild(div('summary', n.summary || '（没有摘要）'));
+
+  // 与上下节点的联系
+  const rel = relation(id);
+  body.appendChild(h4('与上下节点的联系'));
+  const relBox = div('', '');
+  if (rel.prev) relBox.appendChild(relRow('上一步', rel.prev, n));
+  if (rel.next) relBox.appendChild(relRow('下一步', rel.next, null));
+  if (!rel.prev && !rel.next) relBox.appendChild(div('summary', '这是一个孤立的节点。'));
+  body.appendChild(relBox);
+
+  // 出处
   const src = n.source || {};
-  body.appendChild(Object.assign(document.createElement('h4'), { textContent: '出处' }));
+  body.appendChild(h4('出处'));
   if (src.file) {
-    const box = document.createElement('div'); box.className = 'src';
+    const box = div('src', '');
+    box.innerHTML = `<div class="src-file">${src.file}</div>`;
+    const pathEl = document.createElement('div');
+    pathEl.className = 'src-path';
+    pathEl.textContent = src.path || ('data/files/' + src.file);
+    pathEl.title = '点击在文件夹中显示';
+    pathEl.onclick = async () => {
+      const r = await window.api.reveal({ nodeId: n.id });
+      if (r && r.error) toast(r.error);
+      else toast('已在文件夹中选中');
+    };
+    box.appendChild(pathEl);
     const loc = src.locator || {};
     const locTxt = loc.kind === 'pdf' ? `第 ${loc.page} 页` : (loc.start != null ? `第 ${loc.start}–${loc.end} 字` : '');
-    box.innerHTML = `<div class="src-file">${src.file}</div>${locTxt ? `<div class="src-loc">${locTxt}</div>` : ''}<div class="src-ex"></div>`;
-    box.querySelector('.src-ex').textContent = src.excerpt || '';
+    if (locTxt) box.appendChild(div('src-loc', locTxt + ' · 点击路径在文件夹中显示'));
+    const ex = div('src-ex', ''); ex.textContent = src.excerpt || '';
+    if (src.excerpt) box.appendChild(ex);
     body.appendChild(box);
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex;gap:8px;margin-top:8px';
+
+    const row = document.createElement('div'); row.className = 'btn-row';
     const b1 = document.createElement('button');
     b1.className = 'btn primary small'; b1.textContent = '在应用内打开';
     b1.onclick = () => openPreview(n);
     const b2 = document.createElement('button');
-    b2.className = 'btn ghost small'; b2.textContent = '外部打开';
-    b2.onclick = () => window.api.openFileExtern({ nodeId: n.id }).then((r) => { if (r && r.error) toast(r.error); });
+    b2.className = 'btn ghost small'; b2.textContent = '在文件夹中显示';
+    b2.onclick = async () => {
+      const r = await window.api.reveal({ nodeId: n.id });
+      if (r && r.error) toast(r.error);
+    };
     row.appendChild(b1); row.appendChild(b2); body.appendChild(row);
   } else {
-    body.appendChild(Object.assign(document.createElement('div'), { className: 'summary', textContent: '粘贴输入，没有原始文件。' }));
+    body.appendChild(div('summary', '粘贴输入，没有原始文件。'));
   }
 
+  // 字段
   const ex = n.extra || {};
   if (Object.keys(ex).length) {
-    body.appendChild(Object.assign(document.createElement('h4'), { textContent: '字段' }));
-    const kv = document.createElement('div'); kv.className = 'kv';
+    body.appendChild(h4('字段'));
+    const kv = div('kv', '');
     Object.entries(ex).forEach(([k, v]) => {
-      kv.appendChild(Object.assign(document.createElement('div'), { className: 'k', textContent: k }));
-      kv.appendChild(Object.assign(document.createElement('div'), { textContent: String(v) }));
+      kv.appendChild(div('k', k));
+      kv.appendChild(div('', String(v)));
     });
     body.appendChild(kv);
   }
 
-  const rel = S.edges.filter((e) => e.from === id || e.to === id);
-  if (rel.length) {
-    body.appendChild(Object.assign(document.createElement('h4'), { textContent: '关联' }));
-    rel.forEach((e) => {
-      const other = S.nodes.find((x) => x.id === (e.from === id ? e.to : e.from));
-      if (!other) return;
-      const kt = { derived: '属于', supersedes: '取代', relates: '相关', attach: '证据', uses: '被引用' }[e.kind] || e.kind;
-      const line = document.createElement('div');
-      line.className = 'rel';
-      line.innerHTML = `<span class="k">${kt}</span>${other.title}`;
-      line.onclick = () => select(other.id);
-      body.appendChild(line);
-    });
-  }
   $('#panel').classList.remove('hidden');
+}
+
+function h4(t) { return Object.assign(document.createElement('h4'), { textContent: t }); }
+function div(cls, txt) { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = txt; return d; }
+
+function relRow(tag, other, self) {
+  const row = document.createElement('div');
+  row.className = 'rel-row';
+  const t = document.createElement('span'); t.className = 'rel-tag'; t.textContent = tag;
+  const name = document.createElement('span'); name.className = 'rel-name'; name.textContent = other.title;
+  const why = document.createElement('div'); why.className = 'rel-why';
+  why.textContent = (other.extra && other.extra['理由']) ? other.extra['理由'] : '（没有记录原因）';
+  row.appendChild(t); row.appendChild(name); row.appendChild(why);
+  row.onclick = () => {
+    select(other.id);
+    const it = model.byId.get(other.id);
+    if (it) { cam.x = W / 2 - it.x * cam.k; cam.y = H / 2 - it.y * cam.k; draw(); }
+  };
+  return row;
 }
 
 /* ================= 检索 ================= */
 async function doSearch(q) {
   const hint = $('#search-hint');
-  if (!q.trim()) { hint.classList.remove('on'); setFocus(null); draw(); return; }
+  if (!q.trim()) { hint.classList.remove('on'); draw(); return; }
   const r = await window.api.search({ q });
-  focus = new Set(r.hits.map((h) => h.id));
-  r.neighbors.forEach((id) => focus.add(id));
   if (r.hits.length) {
     hint.innerHTML = r.hits.slice(0, 6).map((h) =>
       `<div data-id="${h.id}"><div class="t">${h.title}</div><div class="m">${TYPE_NAME[h.type] || h.type}</div></div>`).join('');
@@ -514,12 +647,14 @@ async function doSearch(q) {
     hint.querySelectorAll('div[data-id]').forEach((el) => {
       el.onclick = () => {
         hint.classList.remove('on');
-        const d = byId.get(el.dataset.id);
-        if (d) { select(d.id); cam.x = W / 2 - d.x * cam.k; cam.y = H / 2 - d.y * cam.k; draw(); }
+        const it = model.byId.get(el.dataset.id);
+        if (it) { select(it.id); cam.x = W / 2 - it.x * cam.k; cam.y = H / 2 - it.y * cam.k; draw(); }
       };
     });
-  } else { hint.innerHTML = '<div><div class="m">没有找到</div></div>'; hint.classList.add('on'); }
-  draw();
+  } else {
+    hint.innerHTML = '<div><div class="m">没有找到</div></div>';
+    hint.classList.add('on');
+  }
 }
 
 /* ================= 收进来 ================= */
@@ -533,7 +668,7 @@ async function doCapture() {
   toast(`进来 ${r.items.length} 条，已挂上 ${r.items.filter((i) => i.committed).length} 条`);
 }
 
-/* ================= 应用内预览 ================= */
+/* ================= 预览 ================= */
 function esc(s) { return String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function sanitize(h) {
   return h.replace(/<script[\s\S]*?<\/script>/gi, '')
@@ -543,6 +678,7 @@ function sanitize(h) {
 }
 
 async function openPreview(n) {
+  if (!n) return;
   pvNode = n;
   const r = await window.api.preview({ nodeId: n.id });
   const box = $('#pv-body'), nameEl = $('#pv-name'), pv = $('#preview');
@@ -555,10 +691,7 @@ async function openPreview(n) {
     const img = document.createElement('img'); img.src = r.dataUrl; box.appendChild(img); return;
   }
   if (r.kind === 'pdf') {
-    const tip = document.createElement('div');
-    tip.className = 'summary';
-    tip.textContent = 'PDF 暂不支持应用内预览（下一版接独立 PDF 视图），先用「外部打开」。';
-    box.appendChild(tip);
+    box.appendChild(div('summary', 'PDF 暂不支持应用内预览（下一版接独立 PDF 视图），先用「外部打开」。'));
     const b = document.createElement('button');
     b.className = 'btn primary small'; b.style.marginTop = '10px'; b.textContent = '外部打开';
     b.onclick = () => window.api.openFileExtern({ nodeId: n.id });
@@ -622,5 +755,88 @@ function scrollToMark(box) {
   if (m) setTimeout(() => m.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60);
 }
 function closePreview() { $('#preview').classList.add('hidden'); pvNode = null; }
+
+/* =================================================================
+   AI 指令总线：window.__PG__.exec(cmd, args)
+   - 所有命令都返回纯 JSON，可被外部脚本 / MCP / 自动化直接调用
+   - main 进程里的 ai:exec 也转发到这里
+   ================================================================= */
+const AI_COMMANDS = {
+  ping: () => ({ ok: true, ts: Date.now() }),
+
+  graph: () => ({
+    project: curProject,
+    projects: S.projects.map((p) => ({ id: p.id, name: p.name })),
+    nodes: model.items.map((it) => ({
+      id: it.id, kind: it.kind, title: it.n.title, type: it.n.type,
+      date: it.n.content_at, status: it.n.status, tag: it.n.tag || null,
+      x: Math.round(it.x), y: Math.round(it.y),
+    })),
+    trunk: model.trunk.map((n) => n.id),
+    branches: model.binfo.map((b) => ({ name: b.name, items: b.items ? b.items.map((i) => i.id) : [] })),
+    links: S.edges.filter((e) => e.kind !== 'uses').map((e) => ({ from: e.from, to: e.to, kind: e.kind })),
+  }),
+
+  node: ({ id }) => {
+    const n = S.nodes.find((x) => x.id === id);
+    if (!n) return { ok: false, error: 'no such node: ' + id };
+    const rel = relation(id);
+    return { ok: true, node: n, prev: rel.prev && rel.prev.id, next: rel.next && rel.next.id };
+  },
+
+  focus: ({ id }) => {
+    const it = model.byId.get(id);
+    if (!it) return { ok: false, error: 'no such node: ' + id };
+    select(id);
+    cam.x = W / 2 - it.x * cam.k; cam.y = H / 2 - it.y * cam.k; draw();
+    return { ok: true, id };
+  },
+
+  open: async ({ id }) => {
+    const n = S.nodes.find((x) => x.id === id);
+    if (!n) return { ok: false, error: 'no such node: ' + id };
+    await openPreview(n);
+    return { ok: true, id };
+  },
+
+  search: async ({ q }) => {
+    const r = await window.api.search({ q });
+    return { ok: true, ...r };
+  },
+
+  project: ({ id }) => { setProject(id); return { ok: true, project: id }; },
+
+  fit: () => { fit(); return { ok: true, k: cam.k }; },
+
+  capture: async ({ text, date }) => {
+    const r = await window.api.capture({ text, date: date || null });
+    S = await window.api.state();
+    renderTabs(); rebuild();
+    return { ok: true, ...r };
+  },
+
+  reveal: async ({ id }) => window.api.reveal({ nodeId: id }),
+
+  select: ({ id }) => { select(id); return { ok: true, id }; },
+
+  state: () => ({ ok: true, project: curProject, selected, locked: LOCKED, k: cam.k }),
+
+  commands: () => ({ ok: true, commands: Object.keys(AI_COMMANDS) }),
+};
+
+function installAI() {
+  window.__PG__ = {
+    exec(cmd, args) {
+      const fn = AI_COMMANDS[cmd];
+      if (!fn) return { ok: false, error: 'unknown command: ' + cmd, available: Object.keys(AI_COMMANDS) };
+      try { return fn(args || {}); } catch (e) { return { ok: false, error: String(e.message || e) }; }
+    },
+    commands: () => Object.keys(AI_COMMANDS),
+    // 便捷方法
+    focus: (id) => window.__PG__.exec('focus', { id }),
+    node: (id) => window.__PG__.exec('node', { id }),
+    graph: () => window.__PG__.exec('graph'),
+  };
+}
 
 boot();

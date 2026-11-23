@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld('api', {
   openFile: (p) => ipcRenderer.invoke('file:open', p),
   openFileExtern: (p) => ipcRenderer.invoke('file:openExtern', p),
   preview: (p) => ipcRenderer.invoke('file:preview', p),
+  reveal: (p) => ipcRenderer.invoke('file:reveal', p),
+  ai: (p) => ipcRenderer.invoke('ai:exec', p),
   openPath: (p) => ipcRenderer.invoke('shell:open', p),
   info: () => ipcRenderer.invoke('app:info'),
   onMenu: (fn) => {

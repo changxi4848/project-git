@@ -308,6 +308,15 @@ function createWindow() {
           } catch(e) {}
           await new Promise(r => setTimeout(r, 2000));
         }
+        if (process.argv.includes('--panel')) {
+          await new Promise(r => setTimeout(r, 900));
+          try {
+            await win.webContents.executeJavaScript('curProject="p_relay";rebuild();');
+            await new Promise(r => setTimeout(r, 700));
+            await win.webContents.executeJavaScript('select("r9");"ok"');
+          } catch(e) {}
+          await new Promise(r => setTimeout(r, 1200));
+        }
         if (process.argv.includes('--relay')) {
           await new Promise(r => setTimeout(r, 800));
           try { await win.webContents.executeJavaScript('curProject="p_relay";rebuild();'); } catch(e) {}
@@ -400,6 +409,15 @@ function registerIpc() {
   ipcMain.handle('search', (e, p) => search(p));
   ipcMain.handle('file:open', (e, p) => openFile(p));
   ipcMain.handle('shell:open', (e, p) => shell.openPath(p));
+  ipcMain.handle('file:reveal', async (e, p) => {
+    const n = store.nodeById(p.nodeId);
+    if (!n || !n.source || !n.source.file) return { error: '没有关联文件' };
+    const full = path.join(store.filesDir(), n.source.file);
+    if (!fs.existsSync(full)) return { error: '文件不存在：' + n.source.file };
+    shell.showItemInFolder(full);
+    return { ok: true, path: full };
+  });
+
   ipcMain.handle('file:preview', async (e, p) => {
     const n = store.nodeById(p.nodeId);
     if (!n || !n.source || !n.source.file) return { error: '没有关联文件' };
@@ -425,6 +443,23 @@ function registerIpc() {
       return { kind, name, text, start: loc.start ?? null, end: loc.end ?? null, excerpt: n.source.excerpt || '' };
     } catch (err) {
       return { error: String(err && err.message || err) };
+    }
+  });
+
+  /* ---------------- AI 指令总线 ----------------
+     渲染进程（或未来的 MCP/自动化脚本）统一走这里：
+     ai:exec({ cmd, args }) -> { ok, data } | { ok:false, error }
+     支持的 cmd 在 web/app.js 的 AI_COMMANDS 里注册。               */
+  ipcMain.handle('ai:exec', async (e, p) => {
+    try {
+      const win = BrowserWindow.getAllWindows()[0];
+      if (!win) return { ok: false, error: '没有窗口' };
+      const payload = JSON.stringify((p && p.args) || {});
+      const script = 'window.__PG__.exec(' + JSON.stringify(p && p.cmd) + ',' + payload + ')';
+      const data = await win.webContents.executeJavaScript(script, true);
+      return { ok: true, data };
+    } catch (err) {
+      return { ok: false, error: String((err && err.message) || err) };
     }
   });
 
