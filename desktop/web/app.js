@@ -141,13 +141,7 @@ function rebuild() {
       bx += CARD_W + GAP_X * 0.7;
     });
     const last = sorted[sorted.length - 1];
-    const firstIt = byId.get(sorted[0].id);
-    const lastIt = byId.get(last.id);
-    binfo.push({
-      name, startX, parentY, parentH, y, last,
-      left: firstIt.x - CARD_W / 2,
-      right: lastIt.x + CARD_W / 2,
-    });
+    binfo.push({ name, parentId: p ? p.id : null, y, last, itemIds: sorted.map((x) => x.id) });
     lane++;
   });
 
@@ -268,7 +262,7 @@ function drawCard(it, hot) {
   // 卡体
   roundRect(x0, y0, w, h, CARD_R);
   ctx.fillStyle = '#FFFFFF'; ctx.fill();
-  ctx.lineWidth = hot ? 2.2 : 1.4;
+  ctx.lineWidth = hot ? 2.4 : 1.6;
   ctx.strokeStyle = col;
   if (dead) ctx.setLineDash([5, 4]);
   ctx.stroke(); ctx.setLineDash([]);
@@ -289,7 +283,7 @@ function drawCard(it, hot) {
 
   // 标题
   const lines = wrapText(n.title, w - 66, '600 15px "Microsoft YaHei"');
-  ctx.fillStyle = dead ? '#8D97A3' : '#111827';
+  ctx.fillStyle = dead ? '#7C8794' : '#0F172A';
   ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   ctx.font = '600 15px "Microsoft YaHei"';
   const titleTop = y - (lines.length * 21) / 2 - 4;
@@ -369,7 +363,7 @@ function fitText(s, maxW) {
 function draw() {
   if (!ctx) return;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.fillStyle = '#F3F6FA'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#EDF1F7'; ctx.fillRect(0, 0, W, H);
 
   ctx.save();
   ctx.translate(cam.x, cam.y); ctx.scale(cam.k, cam.k);
@@ -426,19 +420,24 @@ function draw() {
 
   // 分支线：从父卡顶竖出 → 横走 → 进子卡左缘
   (model.binfo || []).forEach((b) => {
-    const sy = b.parentY - b.parentH / 2;
+    const pIt = b.parentId ? model.byId.get(b.parentId) : null;
+    const kids = (b.itemIds || []).map((id) => model.byId.get(id)).filter(Boolean);
+    if (!pIt || !kids.length) return;
+    const leftEdge = kids[0].x - kids[0].w / 2;
+    const rightEdge = kids[kids.length - 1].x + kids[kids.length - 1].w / 2;
+    const sx = pIt.x, sy = pIt.y - pIt.h / 2;
     ctx.strokeStyle = '#A8B6C4'; ctx.lineWidth = 1.7;
     ctx.beginPath();
-    ctx.moveTo(b.startX, sy);
-    ctx.lineTo(b.startX, b.y);
-    ctx.lineTo(b.left, b.y);
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(sx, b.y);
+    ctx.lineTo(leftEdge, b.y);
     ctx.stroke();
-    ctx.beginPath(); ctx.arc(b.startX, sy, 2.6, 0, 7); ctx.fillStyle = '#A8B6C4'; ctx.fill();
+    ctx.beginPath(); ctx.arc(sx, sy, 2.6, 0, 7); ctx.fillStyle = '#A8B6C4'; ctx.fill();
     if (b.last.status === 'abandoned') {
       ctx.strokeStyle = '#BFC9D4'; ctx.setLineDash([5, 4]);
-      ctx.beginPath(); ctx.moveTo(b.right + 12, b.y); ctx.lineTo(b.right + 42, b.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(rightEdge + 12, b.y); ctx.lineTo(rightEdge + 42, b.y); ctx.stroke();
       ctx.setLineDash([]);
-      const tx = b.right + 46;
+      const tx = rightEdge + 46;
       ctx.strokeStyle = '#AEB8C4'; ctx.lineWidth = 1.8;
       ctx.beginPath();
       ctx.moveTo(tx - 5, b.y - 5); ctx.lineTo(tx + 5, b.y + 5);
@@ -459,7 +458,9 @@ function draw() {
     if (!info || !it) return;
     ctx.strokeStyle = '#9DB4C7'; ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.moveTo(info.right, info.y);
+    const lastK = (info.itemIds || []).map((id) => model.byId.get(id)).filter(Boolean).pop();
+    if (!lastK) return;
+    ctx.moveTo(lastK.x + CARD_W / 2, info.y);
     ctx.lineTo(it.x, info.y);
     ctx.lineTo(it.x, it.y - it.h / 2 - 1);
     ctx.stroke();
