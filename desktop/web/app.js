@@ -1,3 +1,4 @@
+window.__err=null;window.onerror=function(m,src,l,c,e){window.__err=(m+' @'+l+':'+c);};
 'use strict';
 /* 项目Git · 卡片式提交图（固定布局）+ 详情 + 预览 + AI 指令总线 */
 
@@ -12,7 +13,7 @@ const TYPE_NAME = { decision: '决策', output: '产出', plan: '方案', retro:
 
 const CARD_W = 230, CARD_H1 = 96, CARD_H2 = 118, CARD_R = 10;
 const MAT_H = 46, MAT_GAP = 6;
-const GAP_X = 104, GAP_Y = 150;
+const GAP_X = 186, GAP_Y = 190;
 
 let S = { projects: [], types: [], nodes: [], edges: [] };
 let model = { items: [], links: [], byId: new Map(), bounds: null };
@@ -61,7 +62,8 @@ function setProject(id) {
 }
 
 /* ================= 布局（固定、确定性） ================= */
-function wrapText(text, maxW, font) {
+function wrapText(text, maxW, font, maxLines) {
+  const LIMIT = maxLines || 2;
   ctx.save(); ctx.font = font;
   const lines = []; let cur = '';
   for (const ch of text) {
@@ -72,10 +74,10 @@ function wrapText(text, maxW, font) {
         if (cut > 0) { lines.push(cur.slice(0, cut)); cur = cur.slice(cut + 1) + ch; continue; }
       }
       lines.push(cur); cur = ch;
-      if (lines.length >= 2) { cur = ''; break; }
+      if (lines.length >= LIMIT) { cur = ''; break; }
     } else cur = t;
   }
-  if (cur && lines.length < 2) lines.push(cur);
+  if (cur && lines.length < LIMIT) lines.push(cur);
   ctx.restore();
   return lines.length ? lines : [text];
 }
@@ -118,7 +120,9 @@ function rebuild() {
   [...branches.entries()].forEach(([name, list]) => {
     const sorted = list.slice().sort((a, b) => msOf(a.content_at) - msOf(b.content_at));
     const p = byNid.get(sorted[0].parent);
-    const startX = p && trunkX.has(p.id) ? trunkX.get(p.id) : 0;
+    const startX = p && trunkX.has(p.id) ? trunkX.get(p.id) : (p && byId.get(p.id) ? byId.get(p.id).x : 0);
+    const parentY = p && byId.get(p.id) ? byId.get(p.id).y : 0;
+    const parentH = p && byId.get(p.id) ? byId.get(p.id).h : CARD_H1;
     const y = -lane * GAP_Y;
     let bx = startX + 170;
     sorted.forEach((n) => {
@@ -128,7 +132,7 @@ function rebuild() {
       bx += CARD_W + GAP_X * 0.7;
     });
     const last = sorted[sorted.length - 1];
-    binfo.push({ name, startX, y, endX: bx - GAP_X * 0.7 - CARD_W / 2, last });
+    binfo.push({ name, startX, parentY, parentH, y, endX: bx - GAP_X * 0.7 - CARD_W / 2, last });
     lane++;
   });
 
@@ -157,9 +161,9 @@ function rebuild() {
     const top = topCard.y + topCard.h / 2 + 26;
     const show = list.slice(0, 3);
     const hh = show.length * (MAT_H + MAT_GAP) + 12 + (list.length > show.length ? 18 : 0);
-    boxes.push({ cx, top, h: hh, w: CARD_W, items: show, more: list.length - show.length });
+    boxes.push({ ownerId, cx, top, h: hh, w: CARD_W, items: show, more: list.length - show.length });
     show.forEach((n, i) => {
-      const it = { id: n.id, n, kind: 'material', x: cx - CARD_W / 2 + 18, y: top + 12 + i * (MAT_H + MAT_GAP) + MAT_H / 2, w: CARD_W - 30, h: MAT_H };
+      const it = { id: n.id, n, kind: 'material', x: cx, y: top + 12 + i * (MAT_H + MAT_GAP) + MAT_H / 2, w: CARD_W - 24, h: MAT_H };
       items.push(it); byId.set(n.id, it);
     });
   });
@@ -249,7 +253,7 @@ function drawCard(it, hot) {
   // 卡体
   roundRect(x0, y0, w, h, CARD_R);
   ctx.fillStyle = '#FFFFFF'; ctx.fill();
-  ctx.lineWidth = hot ? 2 : 1.2;
+  ctx.lineWidth = hot ? 2.2 : 1.4;
   ctx.strokeStyle = col;
   if (dead) ctx.setLineDash([5, 4]);
   ctx.stroke(); ctx.setLineDash([]);
@@ -350,7 +354,7 @@ function fitText(s, maxW) {
 function draw() {
   if (!ctx) return;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.fillStyle = '#FCFDFE'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#F3F6FA'; ctx.fillRect(0, 0, W, H);
 
   ctx.save();
   ctx.translate(cam.x, cam.y); ctx.scale(cam.k, cam.k);
@@ -368,31 +372,33 @@ function draw() {
     ctx.lineTo(b.x - CARD_W / 2 - 8, y - 4);
     ctx.lineTo(b.x - CARD_W / 2 - 8, y + 4);
     ctx.closePath(); ctx.fillStyle = '#CBD5DF'; ctx.fill();
-    // 过渡说明
+    // 过渡说明：放进两卡之间的空隙，最多 3 行
     const why = (trunk[i + 1].extra && trunk[i + 1].extra['理由']) || '';
     if (why) {
-      ctx.font = '400 11px "Microsoft YaHei"';
-      const t = fitText(why, 120);
-      const tw = ctx.measureText(t).width + 14;
+      const maxW = (b.x - CARD_W / 2) - (a.x + CARD_W / 2) - 26;
+      const lines = wrapText(why, maxW, '400 11.5px "Microsoft YaHei"', 3);
+      ctx.font = '400 11.5px "Microsoft YaHei"';
+      const tw = Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width))) + 20;
+      const th = lines.length * 16 + 12;
       const mx = (a.x + b.x) / 2;
-      const ly = y - Math.max(a.h, b.h) / 2 - 26;
-      roundRect(mx - tw / 2, ly, tw, 22, 6);
-      ctx.fillStyle = '#F7F9FB'; ctx.fill();
-      ctx.strokeStyle = '#E9EEF3'; ctx.lineWidth = 0.8; ctx.stroke();
-      ctx.fillStyle = '#5B6673'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(t, mx, ly + 11);
+      const ly = y - 22 - th;
+      roundRect(mx - tw / 2, ly, tw, th, 7);
+      ctx.fillStyle = '#F4F7FB'; ctx.fill();
+      ctx.strokeStyle = '#E2E8F0'; ctx.lineWidth = 0.8; ctx.stroke();
+      ctx.fillStyle = '#4E5A67'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      lines.forEach((ln, k) => ctx.fillText(ln, mx, ly + 15 + k * 16));
       ctx.textAlign = 'left';
     }
   }
 
-  // 分支线
+  // 分支线：竖出 → 横走 → 进卡片左缘（正交，不斜）
   (model.binfo || []).forEach((b) => {
-    const from = model.byId.get(model.trunk[0].id);
-    ctx.strokeStyle = '#AEB9C5'; ctx.lineWidth = 1.5;
+    const sy = (b.parentY || 0) - (b.parentH || CARD_H1) / 2;
+    ctx.strokeStyle = '#AEB9C5'; ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.moveTo(b.startX, -CARD_H1 / 2);
-    ctx.lineTo(b.startX + 46, b.y);
-    ctx.lineTo(b.endX + CARD_W / 2, b.y);
+    ctx.moveTo(b.startX, sy);
+    ctx.lineTo(b.startX, b.y);
+    ctx.lineTo(b.endX - CARD_W / 2, b.y);
     ctx.stroke();
     if (b.last.status === 'abandoned') {
       ctx.strokeStyle = '#C3CBD5'; ctx.setLineDash([5, 4]);
@@ -417,32 +423,47 @@ function draw() {
     const it = model.byId.get(n.id);
     const info = (model.binfo || []).find((b) => ps.includes(b.last.id));
     if (!info || !it) return;
-    ctx.strokeStyle = '#9DB4C7'; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#9DB4C7'; ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.moveTo(info.endX + CARD_W / 2, info.y);
-    ctx.lineTo(it.x - 60, info.y);
-    ctx.lineTo(it.x - CARD_W / 2 - 4, it.y - CARD_H1 / 2);
+    ctx.lineTo(it.x, info.y);
+    ctx.lineTo(it.x, it.y - it.h / 2 - 1);
     ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(it.x, it.y - it.h / 2 + 1);
+    ctx.lineTo(it.x - 4.5, it.y - it.h / 2 + 9);
+    ctx.lineTo(it.x + 4.5, it.y - it.h / 2 + 9);
+    ctx.closePath(); ctx.fillStyle = '#9DB4C7'; ctx.fill();
   });
 
   // 材料容器
   (model.boxes || []).forEach((b) => {
-    roundRect(b.cx - b.w / 2, b.top, b.w, b.h, 8);
+    const its = (b.items || []).map((n) => model.byId.get(n.id)).filter(Boolean);
+    if (!its.length) return;
+    const xs = its.map((i) => i.x), ys = its.map((i) => i.y);
+    const x0 = Math.min(...xs) - 12, x1 = Math.max(...xs) + it_w(its[0]) + 12;
+    const y0 = Math.min(...ys) - (its[0].h / 2) - 10, y1 = Math.max(...ys) + (its[0].h / 2) + (b.more > 0 ? 22 : 10);
+    roundRect(x0, y0, x1 - x0, y1 - y0, 8);
     ctx.fillStyle = '#FBFCFD'; ctx.fill();
-    ctx.strokeStyle = '#EEF2F6'; ctx.lineWidth = 1; ctx.stroke();
-    ctx.strokeStyle = '#E7EDF3';
-    ctx.beginPath(); ctx.moveTo(b.cx, b.top - 12); ctx.lineTo(b.cx, b.top); ctx.stroke();
+    ctx.strokeStyle = '#E6ECF3'; ctx.lineWidth = 1; ctx.stroke();
+    const owner = model.byId.get(b.ownerId);
+    if (owner) {
+      ctx.strokeStyle = '#E1E8F0';
+      ctx.beginPath(); ctx.moveTo(owner.x, owner.y + owner.h / 2); ctx.lineTo(owner.x, y0); ctx.stroke();
+    }
     if (b.more > 0) {
       const label = '+' + b.more + ' 项';
       ctx.font = '400 10px "Microsoft YaHei"';
       const lw2 = ctx.measureText(label).width + 14;
-      roundRect(b.cx + b.w / 2 - lw2 - 8, b.top + b.h - 20, lw2, 16, 5);
+      roundRect(x1 - lw2 - 8, y1 - 20, lw2, 16, 5);
       ctx.fillStyle = '#F1F4F7'; ctx.fill();
       ctx.fillStyle = '#8A97A5'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(label, b.cx + b.w / 2 - lw2 / 2 - 8, b.top + b.h - 12);
+      ctx.fillText(label, x1 - lw2 / 2 - 8, y1 - 12);
       ctx.textAlign = 'left';
     }
   });
+
+  function it_w(i) { return i.w; }
 
   // 项目内所有条目
   model.items.forEach((it) => {
@@ -839,4 +860,4 @@ function installAI() {
   };
 }
 
-boot();
+boot().catch(function(e){ window.__err = String((e && e.stack) || e); });
