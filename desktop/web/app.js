@@ -105,12 +105,21 @@ function rebuild() {
   });
 
   const items = [], byId = new Map();
-  let x = 0;
-  trunk.forEach((n) => {
+  // 折行：每行最多 PER_ROW 张卡，蛇形往下排，避免只占一条横线
+  const PER_ROW = 99;
+  const ROW_STEP = CARD_H2 + 150;
+  trunk.forEach((n, i) => {
     const h = cardHeight(n.title);
-    const it = { id: n.id, n, kind: 'commit', x: x + CARD_W / 2, y: 0, w: CARD_W, h };
+    const row = Math.floor(i / PER_ROW);
+    const col = i % PER_ROW;
+    const cnt = Math.min(PER_ROW, trunk.length - row * PER_ROW);
+    const c = row % 2 === 0 ? col : (cnt - 1 - col);
+    const it = {
+      id: n.id, n, kind: 'commit', row,
+      x: c * (CARD_W + GAP_X) + CARD_W / 2,
+      y: row * ROW_STEP, w: CARD_W, h,
+    };
     items.push(it); byId.set(n.id, it);
-    x += CARD_W + GAP_X;
   });
   const trunkX = new Map(trunk.map((n) => [n.id, byId.get(n.id).x]));
 
@@ -123,7 +132,7 @@ function rebuild() {
     const startX = p && trunkX.has(p.id) ? trunkX.get(p.id) : (p && byId.get(p.id) ? byId.get(p.id).x : 0);
     const parentY = p && byId.get(p.id) ? byId.get(p.id).y : 0;
     const parentH = p && byId.get(p.id) ? byId.get(p.id).h : CARD_H1;
-    const y = -lane * GAP_Y;
+    const y = parentY - GAP_Y;
     let bx = startX + 170;
     sorted.forEach((n) => {
       const h = cardHeight(n.title);
@@ -132,7 +141,13 @@ function rebuild() {
       bx += CARD_W + GAP_X * 0.7;
     });
     const last = sorted[sorted.length - 1];
-    binfo.push({ name, startX, parentY, parentH, y, endX: bx - GAP_X * 0.7 - CARD_W / 2, last });
+    const firstIt = byId.get(sorted[0].id);
+    const lastIt = byId.get(last.id);
+    binfo.push({
+      name, startX, parentY, parentH, y, last,
+      left: firstIt.x - CARD_W / 2,
+      right: lastIt.x + CARD_W / 2,
+    });
     lane++;
   });
 
@@ -360,51 +375,70 @@ function draw() {
   ctx.translate(cam.x, cam.y); ctx.scale(cam.k, cam.k);
 
   const trunk = model.trunk || [];
-  // 主干线
+  // 主干线（同行横连；折行处走「下—横—下」）
   for (let i = 0; i < trunk.length - 1; i++) {
     const a = model.byId.get(trunk[i].id), b = model.byId.get(trunk[i + 1].id);
-    const y = 0;
-    ctx.strokeStyle = '#CBD5DF'; ctx.lineWidth = 1.6;
-    ctx.beginPath(); ctx.moveTo(a.x + CARD_W / 2, y); ctx.lineTo(b.x - CARD_W / 2, y); ctx.stroke();
-    // 箭头
-    ctx.beginPath();
-    ctx.moveTo(b.x - CARD_W / 2 - 1, y);
-    ctx.lineTo(b.x - CARD_W / 2 - 8, y - 4);
-    ctx.lineTo(b.x - CARD_W / 2 - 8, y + 4);
-    ctx.closePath(); ctx.fillStyle = '#CBD5DF'; ctx.fill();
-    // 过渡说明：放进两卡之间的空隙，最多 3 行
-    const why = (trunk[i + 1].extra && trunk[i + 1].extra['理由']) || '';
-    if (why) {
-      const maxW = (b.x - CARD_W / 2) - (a.x + CARD_W / 2) - 26;
-      const lines = wrapText(why, maxW, '400 11.5px "Microsoft YaHei"', 3);
-      ctx.font = '400 11.5px "Microsoft YaHei"';
-      const tw = Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width))) + 20;
-      const th = lines.length * 16 + 12;
-      const mx = (a.x + b.x) / 2;
-      const ly = y - 22 - th;
-      roundRect(mx - tw / 2, ly, tw, th, 7);
-      ctx.fillStyle = '#F4F7FB'; ctx.fill();
-      ctx.strokeStyle = '#E2E8F0'; ctx.lineWidth = 0.8; ctx.stroke();
-      ctx.fillStyle = '#4E5A67'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      lines.forEach((ln, k) => ctx.fillText(ln, mx, ly + 15 + k * 16));
-      ctx.textAlign = 'left';
+    ctx.strokeStyle = '#C2CEDB'; ctx.lineWidth = 1.8;
+    if (Math.abs(a.y - b.y) < 1) {
+      const y = a.y;
+      const dir = b.x > a.x ? 1 : -1;
+      const x1 = a.x + dir * (CARD_W / 2), x2 = b.x - dir * (CARD_W / 2);
+      ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+      ctx.beginPath();
+      if (dir > 0) {
+        ctx.moveTo(x2, y); ctx.lineTo(x2 - 9, y - 4.5); ctx.lineTo(x2 - 9, y + 4.5);
+      } else {
+        ctx.moveTo(x2, y); ctx.lineTo(x2 + 9, y - 4.5); ctx.lineTo(x2 + 9, y + 4.5);
+      }
+      ctx.closePath(); ctx.fillStyle = '#C2CEDB'; ctx.fill();
+    } else {
+      const ay = a.y + a.h / 2, by2 = b.y - b.h / 2;
+      const midY = (ay + by2) / 2;
+      ctx.beginPath();
+      ctx.moveTo(a.x, ay);
+      ctx.lineTo(a.x, midY);
+      ctx.lineTo(b.x, midY);
+      ctx.lineTo(b.x, by2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(b.x, by2); ctx.lineTo(b.x - 4.5, by2 - 9); ctx.lineTo(b.x + 4.5, by2 - 9);
+      ctx.closePath(); ctx.fillStyle = '#C2CEDB'; ctx.fill();
     }
+    // 过渡说明
+    const why = (trunk[i + 1].extra && trunk[i + 1].extra['理由']) || '';
+    if (!why) continue;
+    const sameRow = Math.abs(a.y - b.y) < 1;
+    const maxW = sameRow ? ((b.x - CARD_W / 2) - (a.x + CARD_W / 2) - 26) : 200;
+    if (maxW < 90) continue;
+    const lines = wrapText(why, maxW, '400 11.5px "Microsoft YaHei"', 3);
+    ctx.font = '400 11.5px "Microsoft YaHei"';
+    const tw = Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width))) + 20;
+    const th = lines.length * 16 + 12;
+    const mx = sameRow ? (a.x + b.x) / 2 : b.x;
+    const ly = sameRow ? (a.y - 22 - th) : (b.y - b.h / 2 - th - 16);
+    roundRect(mx - tw / 2, ly, tw, th, 7);
+    ctx.fillStyle = '#F4F7FB'; ctx.fill();
+    ctx.strokeStyle = '#E2E8F0'; ctx.lineWidth = 0.8; ctx.stroke();
+    ctx.fillStyle = '#4E5A67'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    lines.forEach((ln, k) => ctx.fillText(ln, mx, ly + 15 + k * 16));
+    ctx.textAlign = 'left';
   }
 
-  // 分支线：竖出 → 横走 → 进卡片左缘（正交，不斜）
+  // 分支线：从父卡顶竖出 → 横走 → 进子卡左缘
   (model.binfo || []).forEach((b) => {
-    const sy = (b.parentY || 0) - (b.parentH || CARD_H1) / 2;
-    ctx.strokeStyle = '#AEB9C5'; ctx.lineWidth = 1.6;
+    const sy = b.parentY - b.parentH / 2;
+    ctx.strokeStyle = '#A8B6C4'; ctx.lineWidth = 1.7;
     ctx.beginPath();
     ctx.moveTo(b.startX, sy);
     ctx.lineTo(b.startX, b.y);
-    ctx.lineTo(b.endX - CARD_W / 2, b.y);
+    ctx.lineTo(b.left, b.y);
     ctx.stroke();
+    ctx.beginPath(); ctx.arc(b.startX, sy, 2.6, 0, 7); ctx.fillStyle = '#A8B6C4'; ctx.fill();
     if (b.last.status === 'abandoned') {
-      ctx.strokeStyle = '#C3CBD5'; ctx.setLineDash([5, 4]);
-      ctx.beginPath(); ctx.moveTo(b.endX + CARD_W / 2 + 12, b.y); ctx.lineTo(b.endX + CARD_W / 2 + 42, b.y); ctx.stroke();
+      ctx.strokeStyle = '#BFC9D4'; ctx.setLineDash([5, 4]);
+      ctx.beginPath(); ctx.moveTo(b.right + 12, b.y); ctx.lineTo(b.right + 42, b.y); ctx.stroke();
       ctx.setLineDash([]);
-      const tx = b.endX + CARD_W / 2 + 46;
+      const tx = b.right + 46;
       ctx.strokeStyle = '#AEB8C4'; ctx.lineWidth = 1.8;
       ctx.beginPath();
       ctx.moveTo(tx - 5, b.y - 5); ctx.lineTo(tx + 5, b.y + 5);
@@ -425,7 +459,7 @@ function draw() {
     if (!info || !it) return;
     ctx.strokeStyle = '#9DB4C7'; ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.moveTo(info.endX + CARD_W / 2, info.y);
+    ctx.moveTo(info.right, info.y);
     ctx.lineTo(it.x, info.y);
     ctx.lineTo(it.x, it.y - it.h / 2 - 1);
     ctx.stroke();
@@ -441,8 +475,9 @@ function draw() {
     const its = (b.items || []).map((n) => model.byId.get(n.id)).filter(Boolean);
     if (!its.length) return;
     const xs = its.map((i) => i.x), ys = its.map((i) => i.y);
-    const x0 = Math.min(...xs) - 12, x1 = Math.max(...xs) + it_w(its[0]) + 12;
-    const y0 = Math.min(...ys) - (its[0].h / 2) - 10, y1 = Math.max(...ys) + (its[0].h / 2) + (b.more > 0 ? 22 : 10);
+    const hw0 = its[0].w / 2;
+    const x0 = Math.min(...xs) - hw0 - 12, x1 = Math.max(...xs) + hw0 + 12;
+    const y0 = Math.min(...ys) - its[0].h / 2 - 10, y1 = Math.max(...ys) + its[0].h / 2 + (b.more > 0 ? 22 : 10);
     roundRect(x0, y0, x1 - x0, y1 - y0, 8);
     ctx.fillStyle = '#FBFCFD'; ctx.fill();
     ctx.strokeStyle = '#E6ECF3'; ctx.lineWidth = 1; ctx.stroke();
@@ -498,6 +533,10 @@ function bindUI() {
     lastPointer = { x: e.offsetX, y: e.offsetY };
     const it = pick(e.offsetX, e.offsetY);
     if (it) { select(it.id); return; }
+    if (selected) { selected = null; draw(); }
+    const pnEl = document.getElementById('panel'), pvEl = document.getElementById('preview');
+    if (pnEl) pnEl.classList.add('hidden');
+    if (pvEl) pvEl.classList.add('hidden');
     panning = { x: e.offsetX - cam.x, y: e.offsetY - cam.y };
   });
 
