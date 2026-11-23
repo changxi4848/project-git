@@ -123,16 +123,28 @@ def card(ax, cx, cy, title, meta, color, kind="decision", w=3.20, dead=False, ch
     shadow(ax, x0, y0, w, h, r=0.10)
     panel(ax, x0, y0, w, h, "#FFFFFF", color, r=0.10, lw=1.1, z=4,
           ls=("-" if not dead else (0, (4, 3))))
-    ax.add_patch(FancyBboxPatch((x0 + 0.09, y0 + 0.16), 0.055, h - 0.32,
+    # 左侧类型底色带（淡）
+    from matplotlib.colors import to_rgba
+    ax.add_patch(FancyBboxPatch((x0 + 0.045, y0 + 0.10), 0.16, h - 0.20,
+                                boxstyle="round,pad=0.0,rounding_size=0.03",
+                                facecolor=to_rgba(color, 0.10), edgecolor="none", zorder=4))
+    ax.add_patch(FancyBboxPatch((x0 + 0.085, y0 + 0.16), 0.062, h - 0.32,
                                 boxstyle="round,pad=0.0,rounding_size=0.02",
                                 facecolor=color, edgecolor="none", zorder=5))
-    icon(ax, kind, x0 + pad_x * 0.62, cy, 0.085, color if not dead else "#B9C2CB")
+    ax.add_patch(Circle((x0 + pad_x * 0.52, cy), 0.115, facecolor=to_rgba(color, 0.16),
+                        edgecolor="none", zorder=6))
+    icon(ax, kind, x0 + pad_x * 0.52, cy, 0.085, color if not dead else "#B9C2CB")
 
     top = cy + h / 2 - 0.20
     for i, line in enumerate(lines):
         txt(ax, x0 + pad_x, top - i * (FS_TITLE / 72.0) * LINE_GAP, line, size=FS_TITLE,
             weight="600", color=INK if not dead else "#8D97A3", va="top")
-    txt(ax, x0 + pad_x, y0 + 0.20, meta, size=FS_META, color=MUT)
+    if " · " in meta:
+        tpart, rest = meta.split(" · ", 1)
+        txt(ax, x0 + pad_x, y0 + 0.20, tpart, size=FS_META, color=(color if not dead else "#9AA5B1"), weight="600")
+        txt(ax, x0 + pad_x + text_w(tpart, FS_META) + 0.10, y0 + 0.20, "· " + rest, size=FS_META, color=MUT)
+    else:
+        txt(ax, x0 + pad_x, y0 + 0.20, meta, size=FS_META, color=MUT)
 
     if chip:
         cw = text_w(chip, FS_TINY) + 0.26
@@ -157,5 +169,11 @@ def materials(ax, cx, top, items, w=3.20, row=0.40):
         icon(ax, kind, x0 + 0.21, cy, 0.045, color)
         lines = wrap(name, FS_TINY + 0.8, w - 0.42, max_lines=1)
         txt(ax, x0 + 0.32, cy + 0.08, lines[0] if lines else name, size=FS_TINY + 0.8, color=INK)
-        txt(ax, x0 + 0.32, cy - 0.08, meta, size=FS_TINY - 0.4, color=DIM)
+        if " · " in meta:
+            mp, mr = meta.split(" · ", 1)
+            txt(ax, x0 + 0.32, cy - 0.08, mp, size=FS_TINY - 0.4, color=color, weight="600")
+            txt(ax, x0 + 0.32 + text_w(mp, FS_TINY - 0.4) + 0.08, cy - 0.08, "· " + mr,
+                size=FS_TINY - 0.4, color=DIM)
+        else:
+            txt(ax, x0 + 0.32, cy - 0.08, meta, size=FS_TINY - 0.4, color=DIM)
     return total
