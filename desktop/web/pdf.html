@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8" />
+<title>PDF</title>
+<style>
+  html,body{margin:0;height:100%;background:#525659;font:13px "Microsoft YaHei",sans-serif}
+  #bar{height:40px;display:flex;align-items:center;gap:10px;padding:0 14px;background:#3a3d41;color:#ddd}
+  #bar button{height:26px;padding:0 10px;border:1px solid #55595e;border-radius:6px;background:#484c50;color:#eee;cursor:pointer}
+  #bar button:hover{background:#55595e}
+  #name{flex:1;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #pages{color:#aab;font-size:12px}
+  #view{position:absolute;top:40px;left:0;right:0;bottom:0;overflow:auto;padding:18px;text-align:center}
+  canvas{display:block;margin:0 auto 14px;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+</style></head>
+<body>
+<div id="bar">
+  <span id="name">—</span>
+  <span id="pages"></span>
+  <button id="prev">上一页</button><button id="next">下一页</button>
+</div>
+<div id="view"></div>
+<script src="./vendor/pdf.min.js"></script>
+<script src="./pdf.js"></script>
+</body></html>

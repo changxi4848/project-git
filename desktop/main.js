@@ -334,6 +334,14 @@ function createWindow() {
           } catch(e) {}
           await new Promise(r => setTimeout(r, 1500));
         }
+        if (process.argv.includes('--dbg')) {
+          await new Promise(r => setTimeout(r, 1200));
+          try {
+            const j = await win.webContents.executeJavaScript('JSON.stringify({k:cam.k, items:model.items.slice(0,6).map(i=>({id:i.id,kind:i.kind,y:i.y,h:i.h}))})');
+            fs.writeFileSync(path.join(ROOT,'docs','dbg.json'), j);
+          } catch(e) { fs.writeFileSync(path.join(ROOT,'docs','dbg.json'), 'ERR '+e.message); }
+          await new Promise(r => setTimeout(r, 300));
+        }
         if (process.argv.includes('--relay')) {
           await new Promise(r => setTimeout(r, 800));
           try { await win.webContents.executeJavaScript('curProject="p_relay";rebuild();'); } catch(e) {}
@@ -446,6 +454,53 @@ function registerIpc() {
   ipcMain.handle('ingest:schema', async () => ({ ok: true, schema: ingest.schemaText() }));
   ipcMain.handle('qa:ask', async (e, p) => qa.ask((p && p.q) || ''));
   ipcMain.handle('qa:info', async () => qa.describe());
+
+  ipcMain.handle('pdf:open', async (e, p) => {
+    const n = store.nodeById(p.nodeId);
+    if (!n || !n.source || !n.source.file) return { error: '没有关联文件' };
+    const full = path.join(store.filesDir(), n.source.file);
+    if (!fs.existsSync(full)) return { error: '文件不存在：' + n.source.file };
+    const loc = n.source.locator || {};
+    const q = new URLSearchParams({
+      file: 'file:///' + full.replace(/\\/g, '/'),
+      name: n.source.file,
+      page: String(loc.page || 1),
+    });
+    if (Array.isArray(loc.rect)) q.set('rect', loc.rect.join(','));
+    const w = new BrowserWindow({
+      width: 1000, height: 860, parent: win, backgroundColor: '#525659',
+      title: n.source.file, autoHideMenuBar: true,
+      webPreferences: { offscreen: false },
+    });
+    w.loadURL('file://' + path.join(__dirname, 'web', 'pdf.html') + '?' + q.toString());
+    return { ok: true };
+  });
+
+  ipcMain.handle('qa:config', async () => {
+    const qa = require('./qa');
+    const c = qa.configForUi();
+    return { ok: true, ...c };
+  });
+
+  ipcMain.handle('qa:config:set', async (e, p) => {
+    const file = path.join(store.dataDir(), 'qa_config.json');
+    let c = {};
+    try { if (fs.existsSync(file)) c = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (x) {}
+    if (p.baseURL) c.baseURL = String(p.baseURL).trim();
+    if (p.model) c.model = String(p.model).trim();
+    if (typeof p.apiKey === 'string') c.apiKey = p.apiKey.trim();
+    fs.writeFileSync(file, JSON.stringify(c, null, 2));
+    return { ok: true };
+  });
+
+  ipcMain.handle('state:reset', async () => {
+    const src = path.join(ROOT, 'desktop', 'seed', 'state.json');
+    const dst = path.join(store.dataDir(), 'state.json');
+    if (!fs.existsSync(src)) return { error: '没有种子数据' };
+    try { fs.copyFileSync(dst, path.join(store.dataDir(), 'state.bak.json')); } catch (x) {}
+    fs.copyFileSync(src, dst);
+    return { ok: true };
+  });
 
   ipcMain.handle('file:preview', async (e, p) => {
     const n = store.nodeById(p.nodeId);

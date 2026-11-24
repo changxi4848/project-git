@@ -356,4 +356,14 @@ function describe() {
   };
 }
 
-module.exports = { init, ask, describe, TOOLS, runTool };
+function configForUi() {
+  const c = config();
+  const k = c.apiKey || '';
+  return {
+    baseURL: c.baseURL, model: c.model,
+    hasKey: !!k,
+    keyMask: k ? (k.slice(0, 6) + '****' + k.slice(-4)) : '',
+  };
+}
+
+module.exports = { init, ask, describe, TOOLS, runTool, configForUi };

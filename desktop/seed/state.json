@@ -204,7 +204,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "大创-开题报告.md",
+    "locator": {
+     "kind": "text",
+     "start": 395,
+     "end": 414
+    },
+    "excerpt": "把“舆情”落到可测量的消费者决策阶段上"
+   },
    "extra": {
     "要点": "把“舆情”落到可测量的消费者决策阶段上"
    },
@@ -226,7 +234,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "大创-参考文献23篇.md",
+    "locator": {
+     "kind": "text",
+     "start": 133,
+     "end": 148
+    },
+    "excerpt": "以 RAG + 观点挖掘为主线"
+   },
    "extra": {
     "要点": "以 RAG + 观点挖掘为主线"
    },
@@ -271,7 +287,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "大创-直播弹幕语料.md",
+    "locator": {
+     "kind": "text",
+     "start": 122,
+     "end": 138
+    },
+    "excerpt": "12 万条弹幕 / 2 万条评论"
+   },
    "extra": {
     "规模": "12 万条弹幕 / 2 万条评论",
     "位置": "D://03_code_list/舆情语料"
@@ -294,7 +318,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "大创-四阶段标注集.md",
+    "locator": {
+     "kind": "text",
+     "start": 97,
+     "end": 123
+    },
+    "excerpt": "认知 / 比较 / 下单 / 复购，各 3000 条"
+   },
    "extra": {
     "规模": "1.2 万条",
     "位置": "D://03_code_list/舆情语料/标注"
@@ -409,7 +441,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "大创-检索评测脚本.md",
+    "locator": {
+     "kind": "text",
+     "start": 14,
+     "end": 33
+    },
+    "excerpt": "recall.py / eval.py"
+   },
    "extra": {
     "仓库": "D://03_code_list/舆情语料/code",
     "说明": "recall.py / eval.py"
@@ -582,7 +622,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "中继底座-Console反编译源码.md",
+    "locator": {
+     "kind": "text",
+     "start": 130,
+     "end": 144
+    },
+    "excerpt": "1551 个 java 文件"
+   },
    "extra": {
     "要点": "Console 按设备名与 productKey 分流"
    },
@@ -604,7 +652,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "中继底座-固件镜像73个.md",
+    "locator": {
+     "kind": "text",
+     "start": 188,
+     "end": 206
+    },
+    "excerpt": "73 个 .bin，最大 95 KB"
+   },
    "extra": {
     "规模": "73 个 .bin，最大 95 KB",
     "位置": "D://03_code_list/tourbox-neo-probe/ref/firmware-full"
@@ -627,7 +683,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "中继底座-身份帧样本.md",
+    "locator": {
+     "kind": "text",
+     "start": 407,
+     "end": 431
+    },
+    "excerpt": "26 字节身份帧，首字节 0x07 表示解锁成功"
+   },
    "extra": {
     "规模": "37 组",
     "位置": "D://03_code_list/tourbox-neo-probe/captures"
@@ -650,7 +714,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "中继底座-esp32s3-relay-dock仓库.md",
+    "locator": {
+     "kind": "text",
+     "start": 91,
+     "end": 109
+    },
+    "excerpt": "ESP-IDF 固件，113 个提交"
+   },
    "extra": {
     "仓库": "D:\\03_code_list\\esp32s3-relay-dock",
     "说明": "基线 b6677ef"
@@ -673,7 +745,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "中继底座-BLE服务实现.md",
+    "locator": {
+     "kind": "text",
+     "start": 471,
+     "end": 495
+    },
+    "excerpt": "FFF0 / FFF1 通知 / FFF2 写入"
+   },
    "extra": {
     "仓库": "main/ble_relay.c",
     "说明": "GATT 直连"
@@ -951,7 +1031,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "TourBox-NEO串口日志.md",
+    "locator": {
+     "kind": "text",
+     "start": 183,
+     "end": 205
+    },
+    "excerpt": "USB CDC-ACM，115200 8N1"
+   },
    "extra": {
     "规模": "约 40 万行",
     "位置": "D://03_code_list/tourbox-neo-probe/logs"
@@ -1056,8 +1144,8 @@
     "file": "TourBox-协议.md",
     "locator": {
      "kind": "text",
-     "start": 193,
-     "end": 266
+     "start": 202,
+     "end": 275
     },
     "excerpt": "Successfully reverse-engineered the TourBox Elite authentication protocol"
    },
@@ -1129,7 +1217,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "TourBox-javaagent与LibH.md",
+    "locator": {
+     "kind": "text",
+     "start": 508,
+     "end": 528
+    },
+    "excerpt": "自写 javaagent，导出解密后的类"
+   },
    "extra": {
     "仓库": "D://03_code_list/tourbox-console-decompiled",
     "说明": "配合 -agentpath 使用"
@@ -1152,7 +1248,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "TourBox-反编译源码1551个java.md",
+    "locator": {
+     "kind": "text",
+     "start": 105,
+     "end": 117
+    },
+    "excerpt": "1551 个 .java"
+   },
    "extra": {
     "规模": "1551 个 .java",
     "位置": "D://03_code_list/tourbox-console-decompiled/src"
@@ -1244,7 +1348,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "项目Git-赛题原文6道.md",
+    "locator": {
+     "kind": "text",
+     "start": 1271,
+     "end": 1300
+    },
+    "excerpt": "命题 05：知识密集型多项目团队的知识问答 Harness"
+   },
    "extra": {
     "要点": "团队级、多项目、文档与经验、可溯源"
    },
@@ -1309,7 +1421,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "项目Git-设计稿v1.2.md",
+    "locator": {
+     "kind": "text",
+     "start": 74,
+     "end": 91
+    },
+    "excerpt": "21 页：数据模型、闸门、交互规格"
+   },
    "extra": {
     "要点": "可直接照着开发"
    },
@@ -1324,16 +1444,24 @@
    "project": "p_qianwen",
    "type": "data",
    "title": "演示数据",
-   "summary": "4 个真实项目、52 个节点、7 份原文",
+   "summary": "4 个真实项目、54 个节点、21 份原文",
    "content_at": "2026-11-21",
    "ingest_at": "2026-11-21T01:40",
    "status": "active",
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "项目Git-演示数据.md",
+    "locator": {
+     "kind": "text",
+     "start": 144,
+     "end": 165
+    },
+    "excerpt": "4 个真实项目、54 个节点、21 份原文"
+   },
    "extra": {
-    "规模": "52 节点 / 36 关系",
+    "规模": "54 节点 / 63 关系",
     "位置": "data/state.json"
    },
    "parent": "q4",
@@ -1354,7 +1482,15 @@
    "confidence": 0.95,
    "auto": false,
    "placement": "grow",
-   "source": null,
+   "source": {
+    "file": "项目Git-应用.md",
+    "locator": {
+     "kind": "text",
+     "start": 13,
+     "end": 30
+    },
+    "excerpt": "Electron + d3 力导向"
+   },
    "extra": {
     "仓库": "D:\\03_code_list\\project-git-项目知识时间轴",
     "说明": "main.js / engine.js / web"

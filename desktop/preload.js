@@ -19,6 +19,10 @@ contextBridge.exposeInMainWorld('api', {
   qa: (p) => ipcRenderer.invoke('qa:ask', p),
   qaInfo: () => ipcRenderer.invoke('qa:info'),
   ingest: (p) => ipcRenderer.invoke('ingest:batch', p),
+  openPdf: (p) => ipcRenderer.invoke('pdf:open', p),
+  qaConfig: () => ipcRenderer.invoke('qa:config'),
+  setQaConfig: (p) => ipcRenderer.invoke('qa:config:set', p),
+  resetState: () => ipcRenderer.invoke('state:reset'),
   openPath: (p) => ipcRenderer.invoke('shell:open', p),
   info: () => ipcRenderer.invoke('app:info'),
   onMenu: (fn) => {

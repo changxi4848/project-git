@@ -104,48 +104,7 @@ function rebuild() {
     branches.get(b).push(n);
   });
 
-  const items = [], byId = new Map();
-  // 折行：每行最多 PER_ROW 张卡，蛇形往下排，避免只占一条横线
-  const PER_ROW = 99;
-  const ROW_STEP = CARD_H2 + 150;
-  trunk.forEach((n, i) => {
-    const h = cardHeight(n.title);
-    const row = Math.floor(i / PER_ROW);
-    const col = i % PER_ROW;
-    const cnt = Math.min(PER_ROW, trunk.length - row * PER_ROW);
-    const c = row % 2 === 0 ? col : (cnt - 1 - col);
-    const it = {
-      id: n.id, n, kind: 'commit', row,
-      x: c * (CARD_W + GAP_X) + CARD_W / 2,
-      y: row * ROW_STEP, w: CARD_W, h,
-    };
-    items.push(it); byId.set(n.id, it);
-  });
-  const trunkX = new Map(trunk.map((n) => [n.id, byId.get(n.id).x]));
-
-  // 分支：向上一条泳道
-  const binfo = [];
-  let lane = 1;
-  [...branches.entries()].forEach(([name, list]) => {
-    const sorted = list.slice().sort((a, b) => msOf(a.content_at) - msOf(b.content_at));
-    const p = byNid.get(sorted[0].parent);
-    const startX = p && trunkX.has(p.id) ? trunkX.get(p.id) : (p && byId.get(p.id) ? byId.get(p.id).x : 0);
-    const parentY = p && byId.get(p.id) ? byId.get(p.id).y : 0;
-    const parentH = p && byId.get(p.id) ? byId.get(p.id).h : CARD_H1;
-    const y = parentY - GAP_Y;
-    let bx = startX + 170;
-    sorted.forEach((n) => {
-      const h = cardHeight(n.title);
-      const it = { id: n.id, n, kind: 'branch', x: bx, y, w: CARD_W, h };
-      items.push(it); byId.set(n.id, it);
-      bx += CARD_W + GAP_X * 0.7;
-    });
-    const last = sorted[sorted.length - 1];
-    binfo.push({ name, parentId: p ? p.id : null, y, last, itemIds: sorted.map((x) => x.id) });
-    lane++;
-  });
-
-  // 材料
+  // ---------- 材料归属 ----------
   const MAT_TYPES = new Set(['doc', 'data', 'code', 'plan', 'retro']);
   const mats = new Map();
   vn.forEach((n) => {
@@ -163,21 +122,102 @@ function rebuild() {
     mats.get(owner).push(n);
   });
 
-  const boxes = [];
-  mats.forEach((list, ownerId) => {
-    const cx = trunkX.get(ownerId);
-    const topCard = byId.get(ownerId);
-    const top = topCard.y + topCard.h / 2 + 26;
-    const show = list.slice(0, 3);
-    const hh = show.length * (MAT_H + MAT_GAP) + 12 + (list.length > show.length ? 18 : 0);
-    boxes.push({ ownerId, cx, top, h: hh, w: CARD_W, items: show, more: list.length - show.length });
-    show.forEach((n, i) => {
-      const it = { id: n.id, n, kind: 'material', x: cx, y: top + 12 + i * (MAT_H + MAT_GAP) + MAT_H / 2, w: CARD_W - 24, h: MAT_H };
+  const MAT_ROW = 52, MAT_PAD = 12, MAT_MORE = 18;
+  const boxH = (len) => (len ? Math.min(3, len) * MAT_ROW + MAT_PAD + (len > 3 ? MAT_MORE : 0) : 0);
+
+  // ---------- 分行 ----------
+  const PER_ROW = 3;
+  const rows = [];
+  trunk.forEach((n, i) => {
+    const r = Math.floor(i / PER_ROW);
+    if (!rows[r]) rows[r] = [];
+    rows[r].push(n);
+  });
+
+  const items = [], byId = new Map(), boxes = [];
+  const rowInfo = [];
+  let cursorY = 0;
+  const GAP_ROW = 120, BRANCH_GAP = 300;
+
+  rows.forEach((rowNodes, ri) => {
+    if (!rowNodes || !rowNodes.length) return;
+    const heights = rowNodes.map((n) => cardHeight(n.title));
+    const boxHs = rowNodes.map((n) => boxH((mats.get(n.id) || []).length));
+    // 行高 = 上半个卡 + 下半个卡（含材料框）
+    const halfAbove = Math.max(...heights.map((h) => h / 2), CARD_H1 / 2);
+    const halfBelow = Math.max(...heights.map((h, i) => h / 2 + (boxHs[i] ? 26 + boxHs[i] : 0)), CARD_H1 / 2);
+    const rowH = halfAbove + halfBelow;
+
+    // 该行是否有分支起点
+    const hasBranch = [...branches.values()].some((l) => l.length && l.some((x) => rowNodes.some((r) => r.id === x.id)) );
+    const reserve = hasBranch ? BRANCH_GAP : 0;
+
+    const dir = ri % 2 === 0 ? 1 : -1;
+    const rowY = cursorY + halfAbove;
+    rowNodes.forEach((n, ci) => {
+      const col = dir > 0 ? ci : (rowNodes.length - 1 - ci);
+      const x = col * (CARD_W + GAP_X) + CARD_W / 2;
+      const it = { id: n.id, n, kind: 'commit', row: ri, x, y: rowY, w: CARD_W, h: heights[ci] };
       items.push(it); byId.set(n.id, it);
+    });
+
+    rowInfo.push({ y: rowY, h: rowH, halfAbove, halfBelow, hasBranch, dir, nodes: rowNodes });
+    cursorY += rowH + GAP_ROW + reserve;
+  });
+
+  // ---------- 材料 ----------
+  mats.forEach((list, ownerId) => {
+    const owner = byId.get(ownerId);
+    if (!owner) return;
+    const show = list.slice(0, 3);
+    const top = owner.y + owner.h / 2 + 26;
+    boxes.push({ ownerId, top, items: show, more: list.length - show.length, w: CARD_W, h: boxH(list.length) });
+    show.forEach((n, i) => {
+      items.push({
+        id: n.id, n, kind: 'material', x: owner.x,
+        y: top + MAT_PAD / 2 + i * MAT_ROW + MAT_H / 2,
+        w: CARD_W - 24, h: MAT_H,
+      });
+      byId.set(n.id, items[items.length - 1]);
     });
   });
 
-  model = { items, byId, trunk, binfo, boxes };
+  // ---------- 分支：放在所属行下方，独占一条泳道 ----------
+  const binfo = [];
+  const usedLaneByRow = new Map();
+  [...branches.entries()].forEach(([name, list]) => {
+    const sorted = list.slice().sort((a, b) => msOf(a.content_at) - msOf(b.content_at));
+    const pNode = byNid.get(sorted[0].parent);
+    const pIt = pNode ? byId.get(pNode.id) : null;
+    const ri = pIt ? pIt.row : 0;
+    const info = rowInfo[ri] || rowInfo[0];
+    const laneIdx = usedLaneByRow.get(ri) || 0;
+    usedLaneByRow.set(ri, laneIdx + 1);
+    const laneY = (info ? info.y + info.halfBelow : 0) + 60 + laneIdx * 150;
+
+    let bx = (pIt ? pIt.x : 0) + 170;
+    const ids = [];
+    sorted.forEach((n) => {
+      const it = {
+        id: n.id, n, kind: 'branch', row: ri,
+        x: bx, y: laneY, w: CARD_W, h: cardHeight(n.title),
+      };
+      items.push(it); byId.set(n.id, it); ids.push(n.id);
+      bx += CARD_W + 70;
+    });
+    binfo.push({ name, parentId: pNode ? pNode.id : null, laneY, last: sorted[sorted.length - 1], itemIds: ids, row: ri });
+  });
+
+  // ---------- 垂直居中 ----------
+  if (items.length) {
+    const ys = items.map((it) => it.y);
+    const mid = (Math.min(...ys) + Math.max(...ys)) / 2;
+    items.forEach((it) => { it.y -= mid; });
+    boxes.forEach((b) => { b.top -= mid; });
+    binfo.forEach((b) => { b.laneY -= mid; });
+  }
+
+  model = { items, byId, trunk, binfo, boxes, rowInfo };
   draw(); fit();
 }
 
@@ -194,7 +234,7 @@ function bounds() {
     x0 = Math.min(x0, it.x - it.w / 2); x1 = Math.max(x1, it.x + it.w / 2);
     y0 = Math.min(y0, it.y - it.h / 2); y1 = Math.max(y1, it.y + it.h / 2);
   });
-  model.boxes.forEach((b) => { y1 = Math.max(y1, b.top + b.h); });
+  model.boxes.forEach((b) => { if (isFinite(b.top) && isFinite(b.h)) y1 = Math.max(y1, b.top + b.h); });
   return { x0, x1, y0, y1 };
 }
 
@@ -369,47 +409,46 @@ function draw() {
   ctx.translate(cam.x, cam.y); ctx.scale(cam.k, cam.k);
 
   const trunk = model.trunk || [];
-  // 主干线（同行横连；折行处走「下—横—下」）
+  // ---------- 主干线：同行横连；换行走「右-下-左-下」 ----------
   for (let i = 0; i < trunk.length - 1; i++) {
     const a = model.byId.get(trunk[i].id), b = model.byId.get(trunk[i + 1].id);
+    if (!a || !b) continue;
     ctx.strokeStyle = '#C2CEDB'; ctx.lineWidth = 1.8;
-    if (Math.abs(a.y - b.y) < 1) {
-      const y = a.y;
-      const dir = b.x > a.x ? 1 : -1;
-      const x1 = a.x + dir * (CARD_W / 2), x2 = b.x - dir * (CARD_W / 2);
-      ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
-      ctx.beginPath();
-      if (dir > 0) {
-        ctx.moveTo(x2, y); ctx.lineTo(x2 - 9, y - 4.5); ctx.lineTo(x2 - 9, y + 4.5);
-      } else {
-        ctx.moveTo(x2, y); ctx.lineTo(x2 + 9, y - 4.5); ctx.lineTo(x2 + 9, y + 4.5);
-      }
-      ctx.closePath(); ctx.fillStyle = '#C2CEDB'; ctx.fill();
-    } else {
-      const ay = a.y + a.h / 2, by2 = b.y - b.h / 2;
-      const midY = (ay + by2) / 2;
-      ctx.beginPath();
-      ctx.moveTo(a.x, ay);
-      ctx.lineTo(a.x, midY);
-      ctx.lineTo(b.x, midY);
-      ctx.lineTo(b.x, by2);
+    ctx.beginPath();
+    if (a.row === b.row) {
+      const y = a.y, dir = b.x > a.x ? 1 : -1;
+      const x1 = a.x + dir * (a.w / 2), x2 = b.x - dir * (b.w / 2);
+      ctx.moveTo(x1, y); ctx.lineTo(x2, y);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(b.x, by2); ctx.lineTo(b.x - 4.5, by2 - 9); ctx.lineTo(b.x + 4.5, by2 - 9);
+      ctx.moveTo(x2, y); ctx.lineTo(x2 - dir * 9, y - 4.5); ctx.lineTo(x2 - dir * 9, y + 4.5);
+      ctx.closePath(); ctx.fillStyle = '#C2CEDB'; ctx.fill();
+    } else {
+      const out = 46;
+      const ax = a.x + (b.x > a.x ? a.w / 2 : -a.w / 2);
+      const midY = (a.y + a.h / 2 + b.y - b.h / 2) / 2;
+      ctx.moveTo(ax, a.y);
+      ctx.lineTo(ax, midY);
+      ctx.lineTo(b.x, midY);
+      ctx.lineTo(b.x, b.y - b.h / 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(b.x, b.y - b.h / 2); ctx.lineTo(b.x - 4.5, b.y - b.h / 2 - 9); ctx.lineTo(b.x + 4.5, b.y - b.h / 2 - 9);
       ctx.closePath(); ctx.fillStyle = '#C2CEDB'; ctx.fill();
     }
-    // 过渡说明
+
+    // 过渡说明：放在两张卡中间的空隙
     const why = (trunk[i + 1].extra && trunk[i + 1].extra['理由']) || '';
     if (!why) continue;
-    const sameRow = Math.abs(a.y - b.y) < 1;
-    const maxW = sameRow ? ((b.x - CARD_W / 2) - (a.x + CARD_W / 2) - 26) : 200;
-    if (maxW < 90) continue;
-    const lines = wrapText(why, maxW, '400 11.5px "Microsoft YaHei"', 3);
+    const sameRow = a.row === b.row;
+    const gapW = sameRow ? Math.abs(b.x - a.x) - (a.w + b.w) / 2 - 26 : 210;
+    if (gapW < 100) continue;
+    const lines = wrapText(why, gapW, '400 11.5px "Microsoft YaHei"', 3);
     ctx.font = '400 11.5px "Microsoft YaHei"';
-    const tw = Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width))) + 20;
+    const tw = Math.min(gapW, Math.max(...lines.map((l) => ctx.measureText(l).width))) + 20;
     const th = lines.length * 16 + 12;
     const mx = sameRow ? (a.x + b.x) / 2 : b.x;
-    const ly = sameRow ? (a.y - 22 - th) : (b.y - b.h / 2 - th - 16);
+    const ly = sameRow ? a.y - 18 - th : b.y - b.h / 2 - th - 14;
     roundRect(mx - tw / 2, ly, tw, th, 7);
     ctx.fillStyle = '#F4F7FB'; ctx.fill();
     ctx.strokeStyle = '#E2E8F0'; ctx.lineWidth = 0.8; ctx.stroke();
@@ -418,56 +457,58 @@ function draw() {
     ctx.textAlign = 'left';
   }
 
-  // 分支线：从父卡顶竖出 → 横走 → 进子卡左缘
+  // ---------- 分支线：父卡底 → 竖下到泳道 → 横走 → 子卡左缘 ----------
   (model.binfo || []).forEach((b) => {
     const pIt = b.parentId ? model.byId.get(b.parentId) : null;
     const kids = (b.itemIds || []).map((id) => model.byId.get(id)).filter(Boolean);
     if (!pIt || !kids.length) return;
+    const first = kids[0], lastK = kids[kids.length - 1];
+    const sx = pIt.x, sy = pIt.y + pIt.h / 2;
     const leftEdge = kids[0].x - kids[0].w / 2;
-    const rightEdge = kids[kids.length - 1].x + kids[kids.length - 1].w / 2;
-    const sx = pIt.x, sy = pIt.y - pIt.h / 2;
+    const rightEdge = lastK.x + lastK.w / 2;
     ctx.strokeStyle = '#A8B6C4'; ctx.lineWidth = 1.7;
     ctx.beginPath();
     ctx.moveTo(sx, sy);
-    ctx.lineTo(sx, b.y);
-    ctx.lineTo(leftEdge, b.y);
+    ctx.lineTo(sx, b.laneY);
+    ctx.lineTo(leftEdge, b.laneY);
     ctx.stroke();
     ctx.beginPath(); ctx.arc(sx, sy, 2.6, 0, 7); ctx.fillStyle = '#A8B6C4'; ctx.fill();
+
     if (b.last.status === 'abandoned') {
       ctx.strokeStyle = '#BFC9D4'; ctx.setLineDash([5, 4]);
-      ctx.beginPath(); ctx.moveTo(rightEdge + 12, b.y); ctx.lineTo(rightEdge + 42, b.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(rightEdge + 12, b.laneY); ctx.lineTo(rightEdge + 42, b.laneY); ctx.stroke();
       ctx.setLineDash([]);
       const tx = rightEdge + 46;
       ctx.strokeStyle = '#AEB8C4'; ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.moveTo(tx - 5, b.y - 5); ctx.lineTo(tx + 5, b.y + 5);
-      ctx.moveTo(tx + 5, b.y - 5); ctx.lineTo(tx - 5, b.y + 5);
+      ctx.moveTo(tx - 5, b.laneY - 5); ctx.lineTo(tx + 5, b.laneY + 5);
+      ctx.moveTo(tx + 5, b.laneY - 5); ctx.lineTo(tx - 5, b.laneY + 5);
       ctx.stroke();
       ctx.font = '400 11px "Microsoft YaHei"'; ctx.fillStyle = '#98A5B1';
       ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-      ctx.fillText('尝试终止', tx + 12, b.y);
+      ctx.fillText('尝试终止', tx + 12, b.laneY);
     }
   });
 
-  // 合并线
+  // ---------- 合并：分支末卡右缘 → 横到目标 → 竖上/下到卡边 ----------
   (model.trunk || []).forEach((n) => {
     const ps = (n.parents && n.parents.length) ? n.parents : (n.parent ? [n.parent] : []);
     if (ps.length < 2) return;
     const it = model.byId.get(n.id);
     const info = (model.binfo || []).find((b) => ps.includes(b.last.id));
     if (!info || !it) return;
-    ctx.strokeStyle = '#9DB4C7'; ctx.lineWidth = 1.6;
-    ctx.beginPath();
     const lastK = (info.itemIds || []).map((id) => model.byId.get(id)).filter(Boolean).pop();
     if (!lastK) return;
-    ctx.moveTo(lastK.x + CARD_W / 2, info.y);
-    ctx.lineTo(it.x, info.y);
-    ctx.lineTo(it.x, it.y - it.h / 2 - 1);
+    const sxm = lastK.x + lastK.w / 2, sym = info.laneY;
+    const tx = it.x, ty = it.y - it.h / 2;
+    ctx.strokeStyle = '#9DB4C7'; ctx.lineWidth = 1.7;
+    ctx.beginPath();
+    ctx.moveTo(sxm, sym);
+    ctx.lineTo(tx, sym);
+    ctx.lineTo(tx, ty);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(it.x, it.y - it.h / 2 + 1);
-    ctx.lineTo(it.x - 4.5, it.y - it.h / 2 + 9);
-    ctx.lineTo(it.x + 4.5, it.y - it.h / 2 + 9);
+    ctx.moveTo(tx, ty); ctx.lineTo(tx - 4.5, ty - 9); ctx.lineTo(tx + 4.5, ty - 9);
     ctx.closePath(); ctx.fillStyle = '#9DB4C7'; ctx.fill();
   });
 
@@ -561,6 +602,18 @@ function bindUI() {
     if (it) openPreview(S.nodes.find((n) => n.id === it.id));
   });
 
+  const setBtn = $('#btn-set');
+  if (setBtn) setBtn.onclick = openSettings;
+  const setSave = $('#set-save');
+  if (setSave) setSave.onclick = saveSettings;
+  const setReset = $('#set-reset');
+  if (setReset) setReset.onclick = async () => {
+    if (!confirm('用演示数据覆盖当前数据？（会先备份为 state.bak.json）')) return;
+    const r = await window.api.resetState();
+    if (r && r.ok) { S = await window.api.state(); renderTabs(); rebuild(); toast('已重置'); $('#set').classList.add('hidden'); }
+    else toast('重置失败');
+  };
+  document.querySelectorAll('[data-set-close]').forEach((b) => { b.onclick = () => $('#set').classList.add('hidden'); });
   const askBtn = $('#btn-ask');
   if (askBtn) askBtn.onclick = () => openAsk();
   const askGo = $('#ask-go');
@@ -702,6 +755,32 @@ function relRow(tag, other, self) {
     if (it) { cam.x = W / 2 - it.x * cam.k; cam.y = H / 2 - it.y * cam.k; draw(); }
   };
   return row;
+}
+
+/* ================= 设置 ================= */
+async function openSettings() {
+  const el = $('#set');
+  el.classList.remove('hidden');
+  try {
+    const c = await window.api.qaConfig();
+    $('#set-base').value = c.baseURL || '';
+    $('#set-model').value = c.model || '';
+    $('#set-key').value = '';
+    $('#set-key').placeholder = c.hasKey ? ('已保存：' + c.keyMask + '（留空则不修改）') : 'sk-...';
+    $('#set-tip').textContent = c.hasKey
+      ? '已配置模型：' + c.model + '。保存后立即生效。'
+      : '未配置时使用本地规划器（离线可用，准确率较低）';
+  } catch (e) {}
+}
+async function saveSettings() {
+  const baseURL = $('#set-base').value.trim();
+  const model = $('#set-model').value.trim();
+  const apiKey = $('#set-key').value.trim();
+  const payload = { baseURL, model };
+  if (apiKey) payload.apiKey = apiKey;
+  const r = await window.api.setQaConfig(payload);
+  if (r && r.ok) { toast('已保存'); $('#set').classList.add('hidden'); }
+  else toast('保存失败');
 }
 
 /* ================= 问一问 ================= */

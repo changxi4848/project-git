@@ -89,6 +89,7 @@ def table(headers, rows, widths=None, size=8.4, first_bold=True):
         c = t.rows[0].cells[i]; c.text = ""
         p = c.paragraphs[0]; p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_after = Pt(1); p.paragraph_format.space_before = Pt(1)
+        p.paragraph_format.keep_with_next = True
         r = p.add_run(h); ea(r); r.font.size = Pt(size); r.bold = True
         r.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF); shade(c, "2F2F5E")
     for ri, row in enumerate(rows):
@@ -274,6 +275,8 @@ table(["模块", "功能", "优先级", "说明"],
        ["视图", "Git 式提交图（主干/分支/终止/合并/tag/材料）", "P0", "主视图"],
        ["视图", "分支折叠（只看选中分支）", "P1", "分支多时用"],
        ["检索", "关键词检索 + 高亮跳转", "P0", "标题/摘要/原文三路"],
+       ["问答", "问一问：5 个工具 + Agent 循环 + 字符级引用", "P0", "无 key 时本地规划器兜底"],
+       ["迁移", "批量导入 ingest（Agent 按 JSON 灌入整个项目）", "P0", "标准化 / 去重 / 补边 / 备份"],
        ["详情", "出处置顶 + 打开文件", "P0", "文本定位到字符区间"],
        ["编辑", "改父节点 / 改类型 / 标取代 / 删除 / 撤销", "P0", "AI 会错，人随时能改"],
        ["类型", "新建类型与中文字段", "P1", "字段即抽取结构"],
@@ -385,16 +388,25 @@ code('''desktop/
   preload.js       白名单桥（window.api）
   engine.js        切条 / 判定 / 检索 / 轨迹（纯函数，可单测）
   store.js         状态读写、撤销栈、原子写
+  qa.js            问答：工具层 5 个 + Agent 循环 + 本地兜底规划器
+  ingest.js        批量迁移：类型/状态/日期归一、去重、自动补边
   web/
     index.html     单页结构
     style.css      暗色主题
-    app.js         布局 + 渲染 + 交互
-    vendor/        d3（后续只在需要时使用）
+    app.js         布局 + 渲染 + 交互 + AI 指令总线
+    vendor/        d3 / marked / pdf.js（按需）
   seed/state.json  演示数据
 data/
   state.json       当前数据
-  files/           材料原文
-docs/              设计图与文档''')
+  files/           材料原文（每个资料/数据/代码条目一份）
+  qa_config.json   问答配置（baseURL / model / apiKey）
+docs/              设计图与文档
+tools/
+  ingest.js        命令行导入入口（batch.json 或 stdin）
+  eval_qa.js       评估：20 题简单问法
+  eval_hard.js     评估：20 题换说法
+skills/
+  project-git-ingest/SKILL.md   给使用者的 Agent 的操作手册''')
 
 h2("6.3 IPC 契约")
 table(["通道", "入参", "返回"],
@@ -406,8 +418,13 @@ table(["通道", "入参", "返回"],
        ["`type:add`", "{ name, fields }", "{ type }"],
        ["`search`", "{ q }", "{ hits[], trace[], neighbors[] }"],
        ["`file:open`", "{ nodeId }", "{ kind, text|image, start, end }"],
-       ["`file:openExtern`", "{ nodeId }", "{ ok, path }"],
        ["`file:preview`", "{ nodeId }", "{ kind, text | dataUrl, start, end }"],
+       ["`file:reveal`", "{ nodeId }", "{ ok, path }（资源管理器选中）"],
+       ["`file:openExtern`", "{ nodeId }", "{ ok, path }"],
+       ["`ingest:batch`", "{ batch, dryRun }", "{ project, warnings, created, updated, skipped, edges, dryRun }"],
+       ["`ingest:schema`", "—", "{ ok, schema }（给 Agent 看的 JSON 契约）"],
+       ["`qa:ask`", "{ q }", "{ ok, answer, citations[], trace[], mode, ms }"],
+       ["`qa:info`", "—", "{ mode, baseURL, model, tools[] }"],
        ["`git:sync`", "{ repo? }", "{ added, total }"]],
       widths=[4.2, 6.4, 6.8], size=8.2)
 
@@ -418,6 +435,29 @@ bullets([
     "**文件定位**：文本用字符区间；PDF 用 `pdftoppm` 渲染该页 + 叠加命中框（不引入 Python 依赖）。",
     "**原子写**：`state.json` 先写 `.tmp` 再 rename，断电不损坏。",
 ])
+
+h2("6.5 问答层架构：工具层 / 规划层 / 评估层")
+para("「问一问」不是“接个大模型就完事”。它被拆成**三层**，层与层之间只传 JSON：模型只被允许“决定调哪个工具”，"
+     "事实一律由工具给，成绩一律由评估集量。")
+table(["层", "是什么", "换掉它会怎样", "落点"],
+      [["**工具层**", "5 个只读函数：`list_projects` / `search` / `get_node` / `get_timeline` / `get_citations`；入参是 JSON Schema，出参是纯数据", "**不能换**：答案的事实来源；换模型、换本地、换厂商，这 5 个函数一字不改", "`desktop/qa.js`"],
+       ["**规划层**", "决定“先查哪个、要不要再查一次”。两种实现：模型（OpenAI 兼容 function-calling，最多 6 轮工具调用）或本地确定性规划器", "**可换**：改配置就换模型；没有 key 或模型报错就自动切本地", "`qa_config.json` + 环境变量"],
+       ["**评估层**", "20 题简单问法 + 20 题换说法，走同一个 `qa.ask()` 入口，统计命中率、引用命中、耗时", "**不该换**：换模型前后用同一套题对比，才知道是模型变好还是题变简单", "`tools/eval_qa.js`、`eval_hard.js`"]],
+      widths=[2.0, 6.8, 5.4, 3.6], size=8.1)
+code('''// 工具层：一个工具 = 名字 + JSON Schema + 只读函数（只依赖 store / engine）
+{ name: 'get_citations', parameters: { id: 'string' },
+  run({ id }) { /* 文件、路径、kind、page、start/end、摘录 */ } }
+
+// 规划层：同一个 ask(q)，两条路，出口同一个结构
+if (apiKey) answer = await askWithModel(q)   // 最多 6 轮 function-calling
+else        answer = askLocal(q)             // 确定性规划器（离线、毫秒级）
+if (askWithModel 抛错) answer = askLocal(q)  // 回落，mode 写明原因
+
+// 评估层：不碰 DOM，直接调同一个入口
+const r = await qa.ask(q);  命中 = 期望词都出现在 r.answer 里''')
+callout("**换模型不改工具**：5 个工具只认识 store（数据）和 engine（检索 / 时间），不认识 OpenAI、也不认识任何模型名。"
+        "所以换模型 = 改 `data/qa_config.json` 里的 baseURL / model / apiKey 三个字段；本地兜底 = key 为空时自动生效。"
+        "直接结果是：分数可以横着比——同一套工具、同一套题，变的只有“谁来规划”。")
 
 # ================= 07 =================
 h1("关键算法", "07")
@@ -460,6 +500,8 @@ table(["指标", "目标", "手段"],
        ["100 条目渲染", "60 fps", "Canvas 单次重绘，无 DOM 节点"],
        ["500 条目渲染", "≥ 30 fps", "视口剔除 + 标签按缩放分级显示"],
        ["归位一次", "≤ 3 s", "纯 JS 打分，无模型调用（模型可替换）"],
+       ["问答一次（本地）", "≤ 50 ms", "工具链固定：检索 + 取详情 + 取引用，无模型调用（实测约 1 ms）"],
+       ["批量导入 500 条", "≤ 5 s", "标准化 + 去重 + 补边一次遍历，单个 JSON 落盘"],
        ["崩溃恢复", "不丢数据", "原子写 + 每次修改前压栈"]],
       widths=[3.4, 4.6, 9.0], size=8.4)
 
@@ -488,10 +530,11 @@ electron . --screenshot --drawer                                 # 面板冒烟'
 # ================= 11 =================
 h1("路线图", "11")
 table(["阶段", "内容", "状态"],
-      [["v1.0", "捕获 / 归位 / 提交图 / 检索 / 详情 / 编辑 / 队列", "已实现（布局待换成提交图）"],
-       ["v1.1", "提交图布局 + 分支折叠 + 材料分组框", "本次设计"],
-       ["v1.2", "图片识别（多模态）+ 文件批量导入", "待做"],
-       ["v1.3", "Git 双向：从仓库读 commit 后，条目可挂到 commit 上", "待做"],
+      [["v1.0", "捕获 / 归位 / 提交图 / 检索 / 详情 / 编辑 / 队列", "已实现"],
+       ["v1.1", "提交图布局 + 分支折叠 + 材料分组框", "已实现"],
+       ["v1.2", "问答层（5 工具 + Agent 循环 + 本地兜底）+ 批量迁移 ingest", "**已实现**"],
+       ["v1.3", "图片识别（多模态）+ 文件批量导入", "待做"],
+       ["v1.4", "Git 双向：从仓库读 commit 后，条目可挂到 commit 上", "待做"],
        ["v2.0", "多人协作：条目级权限 + 冲突合并（真的 merge）", "远期待定"]],
       widths=[2.2, 10.6, 5.4], size=8.4)
 
