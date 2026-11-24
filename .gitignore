@@ -8,3 +8,5 @@ docs/debug.json
 docs/dbg2.txt
 
 data/qa_config.json
+__pycache__/
+*.pyc

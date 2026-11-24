@@ -112,7 +112,10 @@ def main():
 
     state = load_state(state_path)
     r = check(state)
-    rel = os.path.relpath(state_path, ROOT)
+    try:
+        rel = os.path.relpath(state_path, ROOT)
+    except ValueError:          # state 在别的盘上时 relpath 会抛错
+        rel = state_path
 
     print("=" * 68)
     print("原文自检 ·%s" % (" " + rel))

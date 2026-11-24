@@ -314,7 +314,7 @@ function createWindow() {
           try {
             await win.webContents.executeJavaScript('curProject="p_relay";rebuild();');
             await new Promise(r => setTimeout(r, 700));
-            await win.webContents.executeJavaScript('select("r9");"ok"');
+            await win.webContents.executeJavaScript('select("r5");"ok"');
           } catch(e) {}
           await new Promise(r => setTimeout(r, 1200));
         }
@@ -334,13 +334,10 @@ function createWindow() {
           } catch(e) {}
           await new Promise(r => setTimeout(r, 1500));
         }
-        if (process.argv.includes('--dbg')) {
-          await new Promise(r => setTimeout(r, 1200));
-          try {
-            const j = await win.webContents.executeJavaScript('JSON.stringify({k:cam.k, items:model.items.slice(0,6).map(i=>({id:i.id,kind:i.kind,y:i.y,h:i.h}))})');
-            fs.writeFileSync(path.join(ROOT,'docs','dbg.json'), j);
-          } catch(e) { fs.writeFileSync(path.join(ROOT,'docs','dbg.json'), 'ERR '+e.message); }
-          await new Promise(r => setTimeout(r, 300));
+        if (process.argv.includes('--settings')) {
+          await new Promise(r => setTimeout(r, 1000));
+          try { await win.webContents.executeJavaScript('openSettings();'); } catch(e) {}
+          await new Promise(r => setTimeout(r, 900));
         }
         if (process.argv.includes('--relay')) {
           await new Promise(r => setTimeout(r, 800));
