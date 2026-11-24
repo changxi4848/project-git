@@ -281,6 +281,7 @@ function createWindow() {
   win.once('ready-to-show', () => {
     win.show();
     if (SHOT_MODE) {
+      const curProjectName = () => (process.argv.find((a) => a.startsWith('--project=')) || '--project=p_relay').split('=')[1];
       setTimeout(async () => {
         try {
           const e1 = await win.webContents.executeJavaScript('JSON.stringify({err: window.__err||null})');
@@ -308,6 +309,17 @@ function createWindow() {
             await win.webContents.executeJavaScript('select("r_pdf");openPreview(S.nodes.find(function(n){return n.id==="r_pdf"}));');
           } catch(e) {}
           await new Promise(r => setTimeout(r, 2000));
+        }
+        const dumpArg = process.argv.find((a) => a.startsWith('--dump'));
+        if (dumpArg) {
+          await new Promise(r => setTimeout(r, 1100));
+          try {
+            const j = await win.webContents.executeJavaScript('JSON.stringify({items:model.items.map(i=>({id:i.id,kind:i.kind,x:i.x,y:i.y,w:i.w,h:i.h,row:i.row})),boxes:model.boxes.map(b=>({top:b.top,h:b.h,w:b.w,ownerId:b.ownerId})),rows:model.rowInfo.map(r=>({y:r.y,h:r.h,halfBelow:r.halfBelow}))})');
+            const outDir = path.join(ROOT, 'temp', 'layout-dumps');
+            fs.mkdirSync(outDir, { recursive: true });
+            fs.writeFileSync(path.join(outDir, curProjectName() + '.json'), j);
+          } catch(e) {}
+          await new Promise(r => setTimeout(r, 200));
         }
         if (process.argv.includes('--panel')) {
           await new Promise(r => setTimeout(r, 900));

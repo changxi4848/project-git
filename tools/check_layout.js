@@ -3,8 +3,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const dir = path.join(__dirname, '..', 'docs');
-const files = fs.readdirSync(dir).filter((f) => /^dump-.*\.json$/.test(f));
+const dir = path.join(__dirname, '..', 'temp', 'layout-dumps');
+if (!fs.existsSync(dir)) { console.log('没有布局快照。先跑： electron . --screenshot --project=p_relay --dump（每个项目一次）'); process.exit(0); }
+const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
 let bad = 0;
 
 function aabb(a) {
