@@ -1,0 +1,32 @@
+{
+  "project": {
+    "id": "p_relay",
+    "name": "ESP32 中继底座"
+  },
+  "nodes": [
+    {
+      "key": "pdf1",
+      "type": "资料",
+      "title": "试错记录（PDF 归档）",
+      "date": "2026-11-18",
+      "summary": "把 44 条试错整理成可打印的 PDF，便于交接",
+      "parents": [
+        "r3"
+      ],
+      "source": {
+        "file": "中继底座-试错记录.pdf",
+        "locator": {
+          "kind": "pdf",
+          "page": 2,
+          "rect": [
+            60,
+            300,
+            520,
+            360
+          ]
+        },
+        "excerpt": "广播名改 TourBox Elite Plus"
+      }
+    }
+  ]
+}
