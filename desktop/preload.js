@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('api', {
   ai: (p) => ipcRenderer.invoke('ai:exec', p),
   qa: (p) => ipcRenderer.invoke('qa:ask', p),
   qaInfo: () => ipcRenderer.invoke('qa:info'),
+  ingest: (p) => ipcRenderer.invoke('ingest:batch', p),
   openPath: (p) => ipcRenderer.invoke('shell:open', p),
   info: () => ipcRenderer.invoke('app:info'),
   onMenu: (fn) => {

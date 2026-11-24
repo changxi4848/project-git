@@ -318,6 +318,11 @@ function createWindow() {
           } catch(e) {}
           await new Promise(r => setTimeout(r, 1200));
         }
+        if (process.argv.includes('--demo')) {
+          await new Promise(r => setTimeout(r, 900));
+          try { await win.webContents.executeJavaScript('curProject="p_demo";rebuild();fit();'); } catch(e) {}
+          await new Promise(r => setTimeout(r, 900));
+        }
         if (process.argv.includes('--ask')) {
           await new Promise(r => setTimeout(r, 900));
           try {
@@ -431,6 +436,14 @@ function registerIpc() {
   });
 
   qa.init(store, engine);
+  const ingest = require('./ingest');
+  ipcMain.handle('ingest:batch', async (e, p) => {
+    try {
+      const r = ingest.apply((p && p.batch) || {}, store, { dryRun: !!(p && p.dryRun) });
+      return { ok: true, ...r };
+    } catch (err) { return { ok: false, error: String(err.message || err) }; }
+  });
+  ipcMain.handle('ingest:schema', async () => ({ ok: true, schema: ingest.schemaText() }));
   ipcMain.handle('qa:ask', async (e, p) => qa.ask((p && p.q) || ''));
   ipcMain.handle('qa:info', async () => qa.describe());
 

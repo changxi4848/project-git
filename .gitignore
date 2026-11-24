@@ -6,3 +6,5 @@ data/state.bak.json
 docs/*.log
 docs/debug.json
 docs/dbg2.txt
+
+data/qa_config.json

@@ -1,0 +1,84 @@
+{
+  "project": {
+    "id": "p_demo",
+    "name": "示例 · 课程设计"
+  },
+  "nodes": [
+    {
+      "key": "a",
+      "type": "方案",
+      "title": "先做单机版验证想法",
+      "date": "2026-03-02",
+      "status": "有效",
+      "summary": "不联网，先把核心算法跑通",
+      "extra": {
+        "理由": "怕一开始就上云，调试成本高"
+      }
+    },
+    {
+      "key": "b",
+      "type": "决策",
+      "title": "放弃单机版，改为联网协作",
+      "date": "2026-03-15",
+      "status": "有效",
+      "parents": [
+        "a"
+      ],
+      "summary": "多人同时编辑必须联网",
+      "extra": {
+        "理由": "单机版没法验证协作冲突"
+      }
+    },
+    {
+      "key": "c",
+      "type": "决策",
+      "title": "试过本地局域网直连",
+      "date": "2026-03-20",
+      "status": "已放弃",
+      "branch": "feat/lan",
+      "parents": [
+        "b"
+      ],
+      "summary": "局域网发现不稳定",
+      "extra": {
+        "理由": "跨网段就找不到设备"
+      }
+    },
+    {
+      "key": "d",
+      "type": "数据",
+      "title": "冲突用例 32 条",
+      "date": "2026-03-18",
+      "status": "有效",
+      "parents": [
+        "b"
+      ],
+      "source": {
+        "file": "冲突用例.md",
+        "locator": {
+          "kind": "text",
+          "start": 0,
+          "end": 20
+        },
+        "excerpt": "同时修改同一块的 32 种情况"
+      }
+    },
+    {
+      "key": "e",
+      "type": "产出",
+      "title": "课程设计报告",
+      "date": "2026-04-10",
+      "status": "草稿",
+      "parents": [
+        "b"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "d",
+      "to": "b",
+      "kind": "attach"
+    }
+  ]
+}
