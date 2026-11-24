@@ -1593,6 +1593,67 @@
    "parents": [
     "q9"
    ]
+  },
+  {
+   "id": "p_relay_试错记录-pdf-归档",
+   "project": "p_relay",
+   "type": "doc",
+   "title": "试错记录（PDF 归档）",
+   "summary": "把 44 条试错整理成可打印的 PDF，便于交接",
+   "content_at": "2026-11-18",
+   "ingest_at": "2026-11-24T16:10:12.802Z",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "branch": "main",
+   "parents": [
+    "r3"
+   ],
+   "extra": {},
+   "source": {
+    "file": "中继底座-试错记录.pdf",
+    "path": "data/files/中继底座-试错记录.pdf",
+    "locator": {
+     "kind": "pdf",
+     "page": 2,
+     "rect": [
+      60,
+      300,
+      520,
+      360
+     ]
+    },
+    "excerpt": "广播名改 TourBox Elite Plus"
+   },
+   "parent": "r3"
+  },
+  {
+   "id": "p_relay_交接文档-word-版",
+   "project": "p_relay",
+   "type": "doc",
+   "title": "交接文档（Word 版）",
+   "summary": "把交接文档导出成 Word，方便发给硬件同事",
+   "content_at": "2026-11-19",
+   "ingest_at": "2026-11-24T16:37:32.876Z",
+   "status": "active",
+   "confidence": 0.95,
+   "auto": false,
+   "placement": "grow",
+   "branch": "main",
+   "parents": [
+    "r14"
+   ],
+   "extra": {},
+   "source": {
+    "file": "中继底座-交接文档.docx",
+    "path": "data/files/中继底座-交接文档.docx",
+    "locator": {
+     "kind": "docx"
+    },
+    "excerpt": "稳定基线"
+   },
+   "parent": "r14"
   }
  ],
  "edges": [
@@ -1908,6 +1969,16 @@
   },
   {
    "from": "r15",
+   "to": "r14",
+   "kind": "derived"
+  },
+  {
+   "from": "p_relay_试错记录-pdf-归档",
+   "to": "r3",
+   "kind": "derived"
+  },
+  {
+   "from": "p_relay_交接文档-word-版",
    "to": "r14",
    "kind": "derived"
   }

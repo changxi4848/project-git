@@ -18,6 +18,9 @@ import json
 import os
 import sys
 
+# 二进制格式只校验「文件存在」，不校验 excerpt 是否为文本子串
+BINARY_EXT = ('.pdf', '.docx', '.xlsx', '.png', '.jpg', '.jpeg', '.gif', '.zip')
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 FILES_DIR = os.path.join(DATA, "files")
@@ -70,6 +73,8 @@ def check(state):
         if bom:
             bom_files.append(fname)
 
+        if str(src.get('file','')).lower().endswith(BINARY_EXT):
+            continue
         if not excerpt:
             broken.append((nid, typ, title, fname, "excerpt 为空"))
             continue
