@@ -339,6 +339,12 @@ function createWindow() {
           try { await win.webContents.executeJavaScript('openSettings();'); } catch(e) {}
           await new Promise(r => setTimeout(r, 900));
         }
+        const pj = (process.argv.find((a) => a.startsWith('--project=')) || '').split('=')[1];
+        if (pj) {
+          await new Promise(r => setTimeout(r, 900));
+          try { await win.webContents.executeJavaScript(`curProject="${pj}";rebuild();fit();`); } catch(e) {}
+          await new Promise(r => setTimeout(r, 900));
+        }
         if (process.argv.includes('--relay')) {
           await new Promise(r => setTimeout(r, 800));
           try { await win.webContents.executeJavaScript('curProject="p_relay";rebuild();'); } catch(e) {}

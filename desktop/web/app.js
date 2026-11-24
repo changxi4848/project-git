@@ -92,6 +92,18 @@ function rebuild() {
   const byNid = new Map(vn.map((n) => [n.id, n]));
   const TRUNK_TYPES = new Set(['decision', 'output']);
 
+  // 规则：已放弃且没有任何后继 → 这是一次「终止的尝试」，自动变成分支（画成带 × 的分叉）
+  const kidsCount = new Map();
+  vn.forEach((n) => {
+    const ps = (n.parents && n.parents.length) ? n.parents : (n.parent ? [n.parent] : []);
+    ps.forEach((p) => kidsCount.set(p, (kidsCount.get(p) || 0) + 1));
+  });
+  vn.forEach((n) => {
+    if (n.status === 'abandoned' && (n.branch || 'main') === 'main' && !kidsCount.get(n.id)) {
+      n.branch = 'feat/abandoned-' + n.id;
+    }
+  });
+
   const trunk = vn.filter((n) => (TRUNK_TYPES.has(n.type) || (n.type === 'plan' && !n.parent)) && (n.branch || 'main') === 'main')
     .sort((a, b) => msOf(a.content_at) - msOf(b.content_at));
   const trunkSet = new Set(trunk.map((n) => n.id));

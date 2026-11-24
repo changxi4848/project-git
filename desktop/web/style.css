@@ -20,7 +20,7 @@ body{
   background:var(--dec); margin-right:8px; vertical-align:1px}
 .tabs{display:flex; gap:2px; overflow-x:auto; scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
-.tab{height:26px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:var(--mut);
+.tab{max-width:200px;overflow:hidden;text-overflow:ellipsis;height:26px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:var(--mut);
   font:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap}
 .tab:hover{color:var(--ink); background:#F1F4F7}
 .tab.on{color:var(--accent); background:#EDF0F8; font-weight:600}
