@@ -818,8 +818,8 @@ async function submitAsk() {
     html += '<div class="ask-cites"><div class="h">引用</div>';
     r.citations.forEach((c) => {
       const loc = c.kind === 'pdf' ? `第 ${c.page} 页` : (c.start != null ? `第 ${c.start}–${c.end} 字` : '');
-      html += `<span class="cite" data-file="${esc2(c.file)}" data-id="${esc2(c.id)}">
-        <span class="dot"></span>${esc2(c.file)}${loc ? ' · ' + loc : ''}</span>`;
+      html += `<span class="cite" data-file="${esc2(c.file)}" data-id="${esc2(c.id)}" title="点开原文">
+        <span class="dot"></span>${esc2(c.file)}${loc ? ' · ' + loc : ''}</span><span class="cite-focus" data-id="${esc2(c.id)}" title="在图上定位">在图上看</span>`;
     });
     html += '</div>';
   }

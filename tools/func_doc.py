@@ -475,8 +475,8 @@ h1("数据与设置", "12")
 table(["功能", "行为"],
       [["重新载入 / 打开目录", "`Ctrl+R` 从磁盘重读 `state.json` 并重绘（手改数据不用重启）；菜单可打开 `data/`"],
        ["重置为演示数据", "备份当前 `state.json` 为 `state.bak.json`，再写入种子数据，重载视图"],
-       ["批量导入前备份", "每次 `ingest` 落盘前写 `data/state.before-ingest.json`，导错了能回滚"],
-       ["问答配置", "`data/qa_config.json`（baseURL / model / apiKey），也可用环境变量覆盖"],
+       ["批量导入快照", "每次 `ingest` 落盘时写 `data/state.before-ingest.json`，便于对比与排查"],
+       ["问答配置", "⚙ 设置里填模型地址 / 模型名 / API Key（存 `data/qa_config.json`），也可用环境变量覆盖"],
        ["状态文件", "`data/state.json` 是唯一真相，原子写（先 `.tmp` 再 rename）"]],
       widths=[4.0, 12.4], size=8.4)
 

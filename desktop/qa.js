@@ -265,13 +265,14 @@ function askLocal(question) {
   trace.push({ tool: 'search', args: { q: question, project: scope } });
   const pool = (Array.isArray(hits) ? hits : []).filter((h) => h.id);
 
-  // 2) 优先级：状态相关的问题先看 abandoned/superseded
+  // 2) 优先级：问“为什么放弃”时先给真正做决定的那条；否则状态相关的先看 abandoned
   let picked = pool;
+  let doerHit = false;
   if (/为什么放弃|为啥放弃|为何放弃/.test(question)) {
     const doer = pool.filter((h) => /放弃/.test(h.title) && !/走错/.test(h.title));
-    if (doer.length) picked = doer.concat(pool.filter((h) => !doer.includes(h)));
+    if (doer.length) { picked = doer.concat(pool.filter((h) => !doer.includes(h))); doerHit = true; }
   }
-  if (wantStatus) {
+  if (wantStatus && !doerHit) {
     const dead = pool.filter((h) => h.status === 'abandoned' || h.status === 'superseded');
     if (dead.length) picked = dead.concat(pool.filter((h) => !dead.includes(h)));
   }
@@ -340,7 +341,7 @@ async function ask(question) {
       return { ok: true, ...r, ms: Date.now() - started };
     } catch (e) {
       const fb = askLocal(question);
-      return { ok: true, ...fb, mode: 'local(fallback: ' + String(e.message || e).slice(0, 80) + ')', ms: Date.now() - started };
+      return { ok: true, ...fb, mode: 'local（模型未授权或不可用，已用本地兜底）', ms: Date.now() - started };
     }
   }
   const r = askLocal(question);

@@ -124,8 +124,6 @@ def code(text, size=7.8):
     tcPr = cell._tc.get_or_add_tcPr(); bd = OxmlElement("w:tcBorders")
     el = OxmlElement("w:left"); el.set(qn("w:val"), "single"); el.set(qn("w:sz"), "18")
     el.set(qn("w:color"), "3F8FC4"); bd.append(el); tcPr.append(bd)
-    trPr = t.rows[0]._tr.get_or_add_trPr()
-    trPr.append(OxmlElement("w:cantSplit"))
     doc.add_paragraph().paragraph_format.space_after = Pt(1)
 
 
@@ -388,23 +386,19 @@ h2("6.2 目录结构")
 code('''desktop/
   main.js          主进程：窗口、菜单、IPC、文件与 git
   preload.js       白名单桥（window.api）
-  engine.js        切条 / 判定 / 检索 / 轨迹（纯函数，可单测）
+  engine.js        切条 / 判定 / 检索 / 轨迹（纯函数）
   store.js         状态读写、撤销栈、原子写
-  qa.js            问答：工具层 5 个 + Agent 循环 + 本地兜底规划器
-  ingest.js        批量迁移：类型/状态/日期归一、去重、自动补边
-  web/             单页结构 + 样式 + 渲染交互 + vendor（d3 / marked / pdf.js）
-  seed/state.json  演示数据
+  qa.js            问答：5 个工具 + Agent 循环 + 本地兜底
+  ingest.js        批量迁移：归一、去重、自动补边
+  web/             单页结构 + 样式 + 渲染交互 + vendor
 data/
-  state.json       当前数据
+  state.json       当前数据（唯一真相，原子写）
   files/           材料原文（每个资料/数据/代码条目一份）
   qa_config.json   问答配置（baseURL / model / apiKey）
 tools/
   ingest.js        命令行导入入口（batch.json 或 stdin）
-  eval_qa.js       评估：20 题简单问法
-  eval_hard.js     评估：20 题换说法
-docs/              设计图与文档
-skills/
-  project-git-ingest/SKILL.md   给使用者的 Agent 操作手册''')
+  eval_qa.js / eval_hard.js   两套评估：简单 20 题 / 难 20 题
+docs/  skills/     设计图与文档 · 给 Agent 的操作手册''')
 
 h2("6.3 IPC 契约")
 table(["通道", "入参", "返回"],
