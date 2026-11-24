@@ -75,6 +75,15 @@ node tools/eval_hard.js   # 20 题全部换说法        → 本地 12/20
 难问法分类：事实 2/6、状态 5/6、跨项目 4/5、溯源 1/3。
 **状态类靠结构化字段就能扛住换说法，事实与溯源需要模型多跳**——这正是接模型的意义。
 
+## 自检（每次改完跑一遍）
+
+```bash
+python tools/check_sources.py   # 每个资料/数据/代码条目都有真实原文、偏移对得上
+node tools/check_layout.js      # 4 个项目的布局：卡片/材料/行距/材料框越界，0 重叠
+node tools/eval_qa.js           # 简单问法
+node tools/eval_hard.js         # 换说法
+```
+
 ## 技术
 
 | 层 | 选择 |

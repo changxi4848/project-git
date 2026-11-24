@@ -463,6 +463,7 @@ function registerIpc() {
     if (!n || !n.source || !n.source.file) return { error: '没有关联文件' };
     const full = path.join(store.filesDir(), n.source.file);
     if (!fs.existsSync(full)) return { error: '文件不存在：' + n.source.file };
+    if (path.extname(n.source.file).toLowerCase() !== '.pdf') return { error: '不是 PDF 文件' };
     const loc = n.source.locator || {};
     const q = new URLSearchParams({
       file: 'file:///' + full.replace(/\\/g, '/'),
