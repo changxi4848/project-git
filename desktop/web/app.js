@@ -910,6 +910,36 @@ async function openPreview(n) {
     b.onclick = () => window.api.openFileExtern({ nodeId: n.id });
     box.appendChild(b); return;
   }
+  if (r.kind === 'docx') {
+    box.innerHTML = '<div class="summary">正在解析 Word…</div>';
+    try {
+      const bin = atob(String(r.dataUrl).split(',')[1] || '');
+      const buf = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+      const out = await window.mammoth.convertToHtml({ arrayBuffer: buf.buffer });
+      const wrap = document.createElement('div');
+      wrap.className = 'md docx';
+      wrap.innerHTML = sanitize(out.value || '');
+      box.innerHTML = '';
+      box.appendChild(wrap);
+      if (out.messages && out.messages.length) {
+        const tip = div('summary', '（有 ' + out.messages.length + ' 处格式未能完全还原）');
+        tip.style.marginTop = '10px'; tip.style.fontSize = '11.5px';
+        box.appendChild(tip);
+      }
+    } catch (e) {
+      box.innerHTML = '<div class="summary">Word 解析失败：' + esc(e.message) + '</div>';
+    }
+    return;
+  }
+  if (r.kind === 'xlsx') {
+    box.appendChild(div('summary', '表格暂不支持应用内预览，先用「外部打开」。'));
+    const b = document.createElement('button');
+    b.className = 'btn primary small'; b.style.marginTop = '10px'; b.textContent = '外部打开';
+    b.onclick = () => window.api.openFileExtern({ nodeId: n.id });
+    box.appendChild(b);
+    return;
+  }
   if (r.kind === 'markdown') {
     const wrap = document.createElement('div'); wrap.className = 'md';
     wrap.innerHTML = sanitize(marked.parse(r.text || ''));

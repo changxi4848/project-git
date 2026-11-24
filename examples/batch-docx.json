@@ -1,0 +1,27 @@
+{
+  "project": {
+    "id": "p_relay",
+    "name": "ESP32 中继底座"
+  },
+  "nodes": [
+    {
+      "key": "docx1",
+      "type": "资料",
+      "title": "交接文档（Word 版）",
+      "date": "2026-11-19",
+      "summary": "把交接文档导出成 Word，方便发给硬件同事",
+      "parents": [
+        "r14"
+      ],
+      "source": {
+        "file": "中继底座-交接文档.docx",
+        "locator": {
+          "kind": "text",
+          "start": 0,
+          "end": 0
+        },
+        "excerpt": "稳定基线"
+      }
+    }
+  ]
+}

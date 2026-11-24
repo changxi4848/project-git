@@ -73,7 +73,7 @@ canvas{position:fixed; inset:46px 0 0 0; width:100%; height:calc(100% - 46px); d
   background:#fff; border-left:1px solid var(--line); display:flex; flex-direction:column;
   box-shadow:-12px 0 40px rgba(16,24,40,.10)}
 .preview.hidden{display:none}
-.pv-head{display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--line2)}
+.pv-head{display:flex; align-items:center; gap:8px; padding:10px 44px 10px 14px; border-bottom:1px solid var(--line2)}
 .pv-name{flex:1; font-size:12.5px; color:#374151; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .pv-body{flex:1; overflow:auto; padding:18px 20px 40px}
 .pv-body img{max-width:100%; display:block; border-radius:6px; margin:0 auto}
@@ -165,3 +165,10 @@ textarea:focus, input:focus{border-color:#B9C4D6}
 .cite-focus{display:inline-block; margin:0 8px 8px 0; padding:5px 8px; border-radius:7px;
   font-size:11px; color:#6B7A88; border:1px dashed #D8E0E8; cursor:pointer}
 .cite-focus:hover{color:#2F5E8C; border-color:#9DB4C7; background:#F5FAFF}
+
+.docx p{margin:8px 0}
+.docx h1,.docx h2,.docx h3{color:#111827; margin:16px 0 8px}
+.docx table{border-collapse:collapse; margin:10px 0; font-size:12px}
+.docx th,.docx td{border:1px solid #E1E7EE; padding:5px 8px}
+.docx img{max-width:100%; border-radius:6px}
+.docx ul,.docx ol{margin:8px 0 8px 20px}

@@ -520,6 +520,10 @@ function registerIpc() {
         const mime = ext === '.svg' ? 'image/svg+xml' : 'image/' + ext.slice(1).replace('jpg', 'jpeg');
         return { kind: 'image', name, dataUrl: 'data:' + mime + ';base64,' + b64, rect: loc.rect || null };
       }
+      if (ext === '.docx' || ext === '.xlsx') {
+        const b64 = fs.readFileSync(full).toString('base64');
+        return { kind: ext === '.docx' ? 'docx' : 'xlsx', name, dataUrl: 'data:application/octet-stream;base64,' + b64 };
+      }
       if (ext === '.pdf') {
         const b64 = fs.readFileSync(full).toString('base64');
         return { kind: 'pdf', name, dataUrl: 'data:application/pdf;base64,' + b64, page: loc.page || 1, rect: loc.rect || null };
