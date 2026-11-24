@@ -561,6 +561,14 @@ function bindUI() {
     if (it) openPreview(S.nodes.find((n) => n.id === it.id));
   });
 
+  const askBtn = $('#btn-ask');
+  if (askBtn) askBtn.onclick = () => openAsk();
+  const askGo = $('#ask-go');
+  if (askGo) askGo.onclick = submitAsk;
+  const askClose = $('#ask-close');
+  if (askClose) askClose.onclick = closeAsk;
+  const askInput = $('#ask-input');
+  if (askInput) askInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitAsk(); if (e.key === 'Escape') closeAsk(); });
   $('#btn-capture').onclick = () => { $('#modal').classList.remove('hidden'); $('#m-date').valueAsDate = new Date(); $('#m-text').focus(); };
   $('#m-go').onclick = doCapture;
   document.querySelectorAll('[data-close]').forEach((b) => { b.onclick = () => $('#modal').classList.add('hidden'); });
@@ -694,6 +702,59 @@ function relRow(tag, other, self) {
     if (it) { cam.x = W / 2 - it.x * cam.k; cam.y = H / 2 - it.y * cam.k; draw(); }
   };
   return row;
+}
+
+/* ================= 问一问 ================= */
+function esc2(s) { return String(s || '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+
+function openAsk(preset) {
+  const el = $('#ask'); if (!el) return;
+  el.classList.remove('hidden');
+  const inp = $('#ask-input');
+  if (preset) inp.value = preset;
+  inp.focus();
+  window.api.qaInfo().then((info) => {
+    $('#ask-hintline').textContent =
+      info.mode === 'model'
+        ? `模型：${info.model}（API）· 工具：${info.tools.length} 个`
+        : '离线模式：本地规划器（未配置 API key）。答案只基于结构化条目，可评估。';
+  }).catch(() => {});
+}
+
+function closeAsk() { const el = $('#ask'); if (el) el.classList.add('hidden'); }
+
+async function submitAsk() {
+  const q = ($('#ask-input').value || '').trim();
+  if (!q) return;
+  const body = $('#ask-body');
+  body.innerHTML = '<div class="ask-empty">正在查…</div>';
+  let r;
+  try { r = await window.api.qa({ q }); }
+  catch (e) { body.innerHTML = '<div class="ask-empty">出错：' + esc2(e.message) + '</div>'; return; }
+
+  const ans = esc2(r.answer || '（没有答案）')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  let html = '<div class="ask-a">' + ans + '</div>';
+  if (r.citations && r.citations.length) {
+    html += '<div class="ask-cites"><div class="h">引用</div>';
+    r.citations.forEach((c) => {
+      const loc = c.kind === 'pdf' ? `第 ${c.page} 页` : (c.start != null ? `第 ${c.start}–${c.end} 字` : '');
+      html += `<span class="cite" data-file="${esc2(c.file)}" data-id="${esc2(c.id)}">
+        <span class="dot"></span>${esc2(c.file)}${loc ? ' · ' + loc : ''}</span>`;
+    });
+    html += '</div>';
+  }
+  html += `<div class="ask-meta">${esc2(r.mode || '')} · ${r.ms || 0}ms${r.trace ? ' · ' + r.trace.length + ' 次工具调用' : ''}</div>`;
+  body.innerHTML = html;
+  body.querySelectorAll('.cite').forEach((el) => {
+    el.onclick = () => {
+      const id = el.dataset.id;
+      const n = S.nodes.find((x) => x.id === id);
+      if (n && n.source) { openPreview(n); }
+      else toast('这条没有原文');
+    };
+  });
+  body.scrollTop = 0;
 }
 
 /* ================= 检索 ================= */
@@ -881,6 +942,11 @@ const AI_COMMANDS = {
   select: ({ id }) => { select(id); return { ok: true, id }; },
 
   state: () => ({ ok: true, project: curProject, selected, locked: LOCKED, k: cam.k }),
+
+  ask: async ({ q }) => {
+    const r = await window.api.qa({ q });
+    return { ok: true, ...r };
+  },
 
   commands: () => ({ ok: true, commands: Object.keys(AI_COMMANDS) }),
 };

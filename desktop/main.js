@@ -11,6 +11,7 @@ const os = require('os');
 const { execFile } = require('child_process');
 const engine = require('./engine');
 const store = require('./store');
+const qa = require('./qa');
 
 const GATE = { autoConf: 0.68, autoMargin: 0.10 };
 const SHOT_MODE = process.argv.includes('--screenshot');
@@ -317,6 +318,17 @@ function createWindow() {
           } catch(e) {}
           await new Promise(r => setTimeout(r, 1200));
         }
+        if (process.argv.includes('--ask')) {
+          await new Promise(r => setTimeout(r, 900));
+          try {
+            await win.webContents.executeJavaScript('curProject="p_relay";rebuild();');
+            await new Promise(r => setTimeout(r, 600));
+            await win.webContents.executeJavaScript('openAsk("为什么放弃 HID？现在还有效吗？");');
+            await new Promise(r => setTimeout(r, 500));
+            await win.webContents.executeJavaScript('submitAsk();');
+          } catch(e) {}
+          await new Promise(r => setTimeout(r, 1500));
+        }
         if (process.argv.includes('--relay')) {
           await new Promise(r => setTimeout(r, 800));
           try { await win.webContents.executeJavaScript('curProject="p_relay";rebuild();'); } catch(e) {}
@@ -417,6 +429,10 @@ function registerIpc() {
     shell.showItemInFolder(full);
     return { ok: true, path: full };
   });
+
+  qa.init(store, engine);
+  ipcMain.handle('qa:ask', async (e, p) => qa.ask((p && p.q) || ''));
+  ipcMain.handle('qa:info', async () => qa.describe());
 
   ipcMain.handle('file:preview', async (e, p) => {
     const n = store.nodeById(p.nodeId);

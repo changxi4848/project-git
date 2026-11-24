@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld('api', {
   preview: (p) => ipcRenderer.invoke('file:preview', p),
   reveal: (p) => ipcRenderer.invoke('file:reveal', p),
   ai: (p) => ipcRenderer.invoke('ai:exec', p),
+  qa: (p) => ipcRenderer.invoke('qa:ask', p),
+  qaInfo: () => ipcRenderer.invoke('qa:info'),
   openPath: (p) => ipcRenderer.invoke('shell:open', p),
   info: () => ipcRenderer.invoke('app:info'),
   onMenu: (fn) => {
