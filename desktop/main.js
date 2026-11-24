@@ -515,7 +515,8 @@ function registerIpc() {
     if (!fs.existsSync(src)) return { error: '没有种子数据' };
     try { fs.copyFileSync(dst, path.join(store.dataDir(), 'state.bak.json')); } catch (x) {}
     fs.copyFileSync(src, dst);
-    return { ok: true };
+    store.load();          // 关键：重置后要把内存里的状态也换掉
+    return { ok: true, nodes: store.get().nodes.length };
   });
 
   ipcMain.handle('file:preview', async (e, p) => {
