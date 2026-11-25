@@ -326,7 +326,7 @@ function createWindow() {
           try {
             await win.webContents.executeJavaScript('curProject="p_relay";rebuild();');
             await new Promise(r => setTimeout(r, 700));
-            await win.webContents.executeJavaScript('select("r5");"ok"');
+            await win.webContents.executeJavaScript('select("a2");"ok"');
           } catch(e) {}
           await new Promise(r => setTimeout(r, 1200));
         }
@@ -340,7 +340,7 @@ function createWindow() {
           try {
             await win.webContents.executeJavaScript('curProject="p_relay";rebuild();');
             await new Promise(r => setTimeout(r, 600));
-            await win.webContents.executeJavaScript('openAsk("为什么放弃 HID？现在还有效吗？");');
+            await win.webContents.executeJavaScript('openAsk("为什么放弃微调小模型？现在还有效吗？");');
             await new Promise(r => setTimeout(r, 500));
             await win.webContents.executeJavaScript('submitAsk();');
           } catch(e) {}
@@ -507,6 +507,41 @@ function registerIpc() {
     if (typeof p.apiKey === 'string') c.apiKey = p.apiKey.trim();
     fs.writeFileSync(file, JSON.stringify(c, null, 2));
     return { ok: true };
+  });
+
+  ipcMain.handle('project:create', async (e, p) => {
+    const name = String((p && p.name) || '').trim();
+    if (!name) return { error: '项目名不能为空' };
+    const st = store.get();
+    if (st.projects.some((x) => x.name === name)) return { error: '已有同名项目' };
+    const id = 'p_' + name.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) + '_' + Date.now().toString(36).slice(-4);
+    st.projects.push({ id, name });
+    store.save();
+    return { ok: true, id, name };
+  });
+
+  ipcMain.handle('project:delete', async (e, p) => {
+    const id = String((p && p.id) || '');
+    const st = store.get();
+    const proj = st.projects.find((x) => x.id === id);
+    if (!proj) return { error: '项目不存在' };
+    const ids = new Set(st.nodes.filter((n) => n.project === id).map((n) => n.id));
+    const n0 = st.nodes.length, e0 = st.edges.length;
+    st.nodes = st.nodes.filter((n) => n.project !== id);
+    st.edges = st.edges.filter((x) => !ids.has(x.from) && !ids.has(x.to));
+    st.projects = st.projects.filter((x) => x.id !== id);
+    try { fs.writeFileSync(path.join(store.dataDir(), 'state.before-delete.json'), JSON.stringify(st, null, 1)); } catch (x) {}
+    store.save();
+    return { ok: true, name: proj.name, removedNodes: n0 - st.nodes.length, removedEdges: e0 - st.edges.length };
+  });
+
+  ipcMain.handle('state:clear', async () => {
+    const st = store.get();
+    const n0 = st.nodes.length;
+    try { fs.writeFileSync(path.join(store.dataDir(), 'state.before-clear.json'), JSON.stringify(st, null, 1)); } catch (x) {}
+    st.projects = []; st.nodes = []; st.edges = [];
+    store.save();
+    return { ok: true, removedNodes: n0 };
   });
 
   ipcMain.handle('state:reset', async () => {

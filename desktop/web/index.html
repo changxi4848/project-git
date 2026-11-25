@@ -72,6 +72,15 @@
     <div class="set-row"><label>模型</label><input id="set-model" placeholder="deepseek-chat" /></div>
     <div class="set-row"><label>API Key</label><input id="set-key" type="password" placeholder="sk-..." /></div>
     <div class="set-tip" id="set-tip">未配置时使用本地规划器（离线可用，准确率较低）</div>
+    <div class="set-sep"></div>
+    <div class="set-row"><label>项目管理</label>
+      <input id="set-newproj" placeholder="新项目名称，回车创建" />
+      <button class="btn ghost small" id="set-newgo">新建</button>
+    </div>
+    <div class="set-actions">
+      <button class="btn ghost small" id="set-delproj">删除当前项目</button>
+      <button class="btn ghost small" id="set-clear">清空所有数据</button>
+    </div>
     <div class="row">
       <button class="btn ghost" id="set-export">导出当前图为 PNG</button>
       <button class="btn ghost" id="set-reset">重置演示数据</button>

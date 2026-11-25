@@ -23,6 +23,9 @@ contextBridge.exposeInMainWorld('api', {
   qaConfig: () => ipcRenderer.invoke('qa:config'),
   setQaConfig: (p) => ipcRenderer.invoke('qa:config:set', p),
   resetState: () => ipcRenderer.invoke('state:reset'),
+  createProject: (p) => ipcRenderer.invoke('project:create', p),
+  deleteProject: (p) => ipcRenderer.invoke('project:delete', p),
+  clearAll: () => ipcRenderer.invoke('state:clear'),
   openPath: (p) => ipcRenderer.invoke('shell:open', p),
   info: () => ipcRenderer.invoke('app:info'),
   onMenu: (fn) => {

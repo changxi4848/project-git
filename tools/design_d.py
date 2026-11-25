@@ -121,20 +121,20 @@ def materials(cx, top, items, w=CW):
 
 # ---------- 主干 ----------
 xs = [1.95, 5.15, 8.35, 11.55, 14.75]
-c1 = card(xs[0], Y_TRUNK, "让 NEO 冒充 Elite", "方案 · 2026-08-12", PLAN, "plan")
-c2 = card(xs[1], Y_TRUNK, "放弃 HID，改 GATT", "决策 · 2026-09-02", DEC, "decision")
-c3 = card(xs[2], Y_TRUNK, "冒用 productKey", "决策 · 2026-09-12", DEC, "decision")
-c4 = card(xs[3], Y_TRUNK, "锁定基线 b6677ef", "决策 · 2026-10-15", DEC, "decision", tag="b6677ef")
-c5 = card(xs[4], Y_TRUNK, "改板：加外部天线", "决策 · 2026-11-02", DEC, "decision")
+c1 = card(xs[0], Y_TRUNK, "规则分流打底", "方案 · 2026-03-10", PLAN, "plan")
+c2 = card(xs[1], Y_TRUNK, "放弃 HID，改 GATT", "决策 · 2026-04-02", DEC, "decision")
+c3 = card(xs[2], Y_TRUNK, "改用线性基线", "决策 · 2026-04-28", DEC, "decision")
+c4 = card(xs[3], Y_TRUNK, "灰度 10% 上线", "决策 · 2026-07-01", DEC, "decision", tag="b6677ef")
+c5 = card(xs[4], Y_TRUNK, "接知识库出草稿", "决策 · 2026-06-08", DEC, "decision")
 
-link(c1, c2, "按 Plus 的 HID 试")
-link(c2, c3, "GATT 能连，机型不对")
-link(c3, c4, "能跑了，先固化")
-link(c4, c5, "天线衰减 12dB")
+link(c1, c2, "规则只能覆盖 60%")
+link(c2, c3, "差 8 个点，成本差一个量级")
+link(c3, c4, "草稿质量未知，风险大")
+link(c4, c5, "转人工的一半是没答案")
 
 # ---------- 分支 1：终止 ----------
 bx = 5.05
-b1 = card(bx, Y_BR, "先走 HID 流", "决策 · 2026-08-20", "#C7CFD8", "decision", dead=True,
+b1 = card(bx, Y_BR, "试过微调小模型", "决策 · 2026-04-20", "#C7CFD8", "decision", dead=True,
           chip="已放弃", chipcolor=("#F3F5F7", "#8D97A3"))
 ax.plot([xs[0], xs[0] + 0.55, bx - CW / 2 - 0.02], [Y_TRUNK + CH / 2, Y_BR, Y_BR],
         color="#AEB9C5", lw=1.5, zorder=3, solid_capstyle="round", solid_joinstyle="round")
@@ -147,7 +147,7 @@ ax.text(tx + 0.10, Y_BR, "尝试终止", fontsize=8.2, color="#98A5B1", va="cent
 
 # ---------- 分支 2：合并 ----------
 px = 13.65
-b2 = card(px, Y_BR, "PCB v1 打样", "方案 · 2026-10-25", PLAN, "plan")
+b2 = card(px, Y_BR, "PCB v1 打样", "复盘 · 2026-05-12", PLAN, "plan")
 ax.plot([xs[3], xs[3] + 0.55, px - CW / 2 - 0.02], [Y_TRUNK + CH / 2, Y_BR, Y_BR],
         color="#AEB9C5", lw=1.5, zorder=3, solid_capstyle="round", solid_joinstyle="round")
 ax.plot([px + CW / 2 + 0.02, xs[4] - 0.58], [Y_BR, Y_BR], color="#AEB9C5", lw=1.5, zorder=3)
@@ -159,17 +159,17 @@ ax.text((px + xs[4]) / 2, Y_BR - CH / 2 - 0.20, "合并：改板采纳了这个�
 
 # ---------- 材料 ----------
 materials(xs[0], Y_TRUNK - CH / 2 - 0.10, [
-    ("doc", "试错记录", "资料 · 44 条", DOC),
-    ("doc", "Console 反编译源码", "资料 · 已产出", DOC),
-    ("data", "固件镜像", "数据 · 73 个 .bin", DATA),
+    ("doc", "工单样本说明", "数据 · 18,400 条", DOC),
+    ("doc", "分类模型评测", "资料 · 已产出", DOC),
+    ("data", "知识库 260 篇", "资料 · 260 篇", DATA),
 ])
 materials(xs[2], Y_TRUNK - CH / 2 - 0.10, [
-    ("data", "身份帧样本", "数据 · 37 组", DATA),
-    ("data", "抓包日志", "数据 · 40 万行", DATA),
+    ("data", "上线报告", "数据 · 上线指标", DATA),
+    ("data", "分流服务", "数据 · 6 月评测", DATA),
 ])
 materials(xs[3], Y_TRUNK - CH / 2 - 0.10, [
-    ("doc", "交接文档", "资料 · 已归档", DOC),
-    ("code", "esp32s3-relay-dock", "代码 · 113 commits", CODE),
+    ("doc", "上线报告 Word", "产出 · 报告", DOC),
+    ("code", "star-ticket-router", "代码 · FastAPI", CODE),
 ])
 
 # ---------- 图例 ----------

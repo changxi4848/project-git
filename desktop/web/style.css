@@ -172,3 +172,7 @@ textarea:focus, input:focus{border-color:#B9C4D6}
 .docx th,.docx td{border:1px solid #E1E7EE; padding:5px 8px}
 .docx img{max-width:100%; border-radius:6px}
 .docx ul,.docx ol{margin:8px 0 8px 20px}
+
+.set-sep{height:1px; background:#F1F4F7; margin:6px 0 12px}
+.set-actions{display:flex; gap:8px; margin:0 0 12px 82px}
+.set-row input#set-newproj{max-width:260px}

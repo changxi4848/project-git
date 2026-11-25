@@ -629,6 +629,46 @@ function bindUI() {
   if (exportBtn) exportBtn.onclick = exportPng;
   const setBtn = $('#btn-set');
   if (setBtn) setBtn.onclick = openSettings;
+  const newGo = $('#set-newgo');
+  if (newGo) newGo.onclick = async () => {
+    const name = ($('#set-newproj').value || '').trim();
+    if (!name) return toast('先填项目名');
+    const r = await window.api.createProject({ name });
+    if (r.error) return toast(r.error);
+    S = await window.api.state();
+    curProject = r.id; renderTabs(); rebuild();
+    $('#set').classList.add('hidden');
+    toast('已新建：' + r.name);
+  };
+  const newInput = $('#set-newproj');
+  if (newInput) newInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') newGo && newGo.click(); });
+
+  const delProj = $('#set-delproj');
+  if (delProj) delProj.onclick = async () => {
+    const p = S.projects.find((x) => x.id === curProject);
+    if (!p) return toast('没有可删的项目');
+    if (!confirm('删除项目「' + p.name + '」及其全部条目与关系？\n（会先备份为 state.before-delete.json）')) return;
+    const r = await window.api.deleteProject({ id: curProject });
+    if (r.error) return toast(r.error);
+    S = await window.api.state();
+    curProject = (S.projects[0] || {}).id || null;
+    renderTabs(); rebuild();
+    $('#set').classList.add('hidden');
+    toast('已删除「' + r.name + '」：' + r.removedNodes + ' 条记录');
+  };
+
+  const clearAll = $('#set-clear');
+  if (clearAll) clearAll.onclick = async () => {
+    if (!confirm('清空所有项目、条目与关系？\n（会先备份为 state.before-clear.json）')) return;
+    const r = await window.api.clearAll();
+    if (r.error) return toast(r.error);
+    S = await window.api.state();
+    curProject = null; selected = null;
+    renderTabs(); rebuild();
+    $('#set').classList.add('hidden');
+    toast('已清空：' + r.removedNodes + ' 条记录');
+  };
+
   const setSave = $('#set-save');
   if (setSave) setSave.onclick = saveSettings;
   const setReset = $('#set-reset');
