@@ -115,3 +115,18 @@ skills/         给使用者 Agent 的 skill
 - 收进来目前是「粘文本」；文件批量导入走 ingest
 - git 只读：仓库路径在设置里自己填，默认不连任何仓库
 - 模型 key 需要自己配；配错会自动降级，不会卡住
+
+## 许可
+
+MIT（见 `LICENSE`）。演示数据为合成内容，与任何真实项目无关。
+
+## 目录结构
+
+```
+desktop/        应用本体（主进程 / preload / 引擎 / 渲染层 / PDF 查看页）
+desktop/seed/   演示数据（首次启动会复制到 data/）
+docs/           设计稿、使用说明、契约、截图
+skills/         给使用者 Agent 的 skill
+tools/          生成演示数据、自检、评估、批量导入 CLI
+examples/       可导入的示例批次
+```
