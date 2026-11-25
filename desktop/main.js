@@ -193,7 +193,6 @@ function gitSync({ repo } = {}) {
   const st = store.get();
   const candidates = [
     repo,
-    'D:\\03_code_list\\esp32s3-relay-dock',
     path.join(dataDir, 'demo-repo'),
   ].filter(Boolean);
   const target = candidates.find((d) => fs.existsSync(path.join(d, '.git'))) || candidates[0];

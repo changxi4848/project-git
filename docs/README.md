@@ -71,8 +71,7 @@ python tools/soft_doc.py     # → docs/项目Git-软件设计稿v1.0.docx（嵌
 转 PDF（走 Word COM，必须先进那个目录再执行）：
 
 ```powershell
-cd "D:\03_code_list\Claude code\任务64-千问大赛"
-python .\temp\topdf2.py "<docx 绝对路径>" "<pdf 绝对路径>"
+cd "D:\03_code_list\Claude code\任务64-python .\temp\topdf2.py "<docx 绝对路径>" "<pdf 绝对路径>"
 ```
 
 数据分析（会改 `data/`，改完记得重出文档和截图）：
