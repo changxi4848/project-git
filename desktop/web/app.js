@@ -138,7 +138,7 @@ function rebuild() {
   const boxH = (len) => (len ? Math.min(3, len) * MAT_ROW + MAT_PAD + (len > 3 ? MAT_MORE : 0) : 0);
 
   // ---------- 分行 ----------
-  const PER_ROW = 3;
+  const PER_ROW = 3;   // 固定三列：卡片 230 + 间距 186，三列刚好一屏
   const rows = [];
   trunk.forEach((n, i) => {
     const r = Math.floor(i / PER_ROW);
@@ -262,6 +262,16 @@ function fit() {
 }
 
 function toWorld(sx, sy) { return [(sx - cam.x) / cam.k, (sy - cam.y) / cam.k]; }
+
+function drawEmpty() {
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#8A97A5';
+  ctx.font = '600 16px "Microsoft YaHei"';
+  ctx.fillText('这个项目还没有内容', W / 2, H / 2 - 18);
+  ctx.font = '400 13px "Microsoft YaHei"';
+  ctx.fillStyle = '#A8B2BD';
+  ctx.fillText('点右上角「收进来」粘一段，或用 tools/ingest.js 批量导入', W / 2, H / 2 + 14);
+}
 
 /* ================= 绘制 ================= */
 function icon(kind, x, y, s, color) {
@@ -416,6 +426,7 @@ function draw() {
   if (!ctx) return;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.fillStyle = '#EDF1F7'; ctx.fillRect(0, 0, W, H);
+  if (!model.items || !model.items.length) { drawEmpty(); return; }
 
   ctx.save();
   ctx.translate(cam.x, cam.y); ctx.scale(cam.k, cam.k);
@@ -614,6 +625,8 @@ function bindUI() {
     if (it) openPreview(S.nodes.find((n) => n.id === it.id));
   });
 
+  const exportBtn = $('#set-export');
+  if (exportBtn) exportBtn.onclick = exportPng;
   const setBtn = $('#btn-set');
   if (setBtn) setBtn.onclick = openSettings;
   const setSave = $('#set-save');
@@ -767,6 +780,18 @@ function relRow(tag, other, self) {
     if (it) { cam.x = W / 2 - it.x * cam.k; cam.y = H / 2 - it.y * cam.k; draw(); }
   };
   return row;
+}
+
+/* ================= 导出图片 ================= */
+function exportPng() {
+  try {
+    const url = canvas.toDataURL('image/png');
+    const a2 = document.createElement('a');
+    a2.href = url;
+    a2.download = (curProject || 'graph') + '-' + new Date().toISOString().slice(0, 10) + '.png';
+    document.body.appendChild(a2); a2.click(); a2.remove();
+    toast('已导出 PNG');
+  } catch (e) { toast('导出失败：' + e.message); }
 }
 
 /* ================= 设置 ================= */
