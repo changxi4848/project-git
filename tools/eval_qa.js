@@ -1,5 +1,5 @@
 'use strict';
-/* 问答评估：20 题，跑本地规划器（无 key 时）或模型，统计命中率 / 引用命中 / 耗时 */
+/* 简单问法 20 题（含标题词）：node tools/eval_qa.js */
 const path = require('path');
 const store = require('../desktop/store');
 const engine = require('../desktop/engine');
@@ -9,29 +9,27 @@ store.init(path.join(__dirname, '..', 'data'));
 store.load();
 qa.init(store, engine);
 
-// expect: 答案里必须出现的词（全部命中才算对）
-// cite:   期望引用到的文件名（可选）
 const CASES = [
-  { q: '为什么放弃 HID？', expect: ['HID', 'GATT'], cite: '中继底座-试错记录.md' },
-  { q: '放弃 HID 之后改成了什么？', expect: ['GATT'] },
-  { q: '先走 HID 流后来怎么样了？', expect: ['HID'] },
-  { q: '锁定基线是哪个 commit？', expect: ['b6677ef'] },
-  { q: '中继底座为什么改板加外部天线？', expect: ['改板'] },
-  { q: '冒用 productKey 是做什么的？', expect: ['productKey'] },
-  { q: '硬脱壳为什么走错了？', expect: ['脱壳'] },
-  { q: '停掉脱壳路线是什么时候？', expect: ['脱壳'] },
-  { q: 'TourBox 抓包用什么方法？', expect: ['CDC-ACM'] },
-  { q: '协议逆向最终逆向的是哪个文件？', expect: ['LibH'] },
-  { q: '为什么不使用逻辑分析仪？', expect: ['CDC-ACM'] },
-  { q: '大创项目为什么不做微调？', expect: ['RAG'] },
-  { q: '舆情 RAG 用的什么向量模型？', expect: ['bge'] },
-  { q: '标注一致性是多少？', expect: ['0.61'] },
-  { q: '论文初稿属于哪个项目？', expect: ['论文初稿'] },
-  { q: '千问大赛为什么选命题 05？', expect: ['命题 05'] },
-  { q: '哪个项目里有走错了的决策？', expect: ['走错'] },
-  { q: '试错记录里稳定基线是怎么描述的？', expect: ['稳定基线'], cite: '中继底座-试错记录.md' },
-  { q: '交接文档出自哪个文件？', expect: ['交接文档'] },
-  { q: '安卓端为什么暂停归档？', expect: ['安卓'] },
+  { q: '为什么放弃微调小模型？', expect: ['微调'], cite: '北极星-分类模型评测.md' },
+  { q: '微调放弃之后改用了什么？', expect: ['线性'] },
+  { q: '现场 WiFi 回传为什么不可靠？', expect: ['WiFi'] },
+  { q: '改成了什么回传方式？', expect: ['4G'] },
+  { q: '边缘推理为什么只回传事件？', expect: ['事件'] },
+  { q: '误报集中在什么天气？', expect: ['雨雾'] },
+  { q: '误判率从多少降到多少？', expect: ['12', '6.4'] },
+  { q: '低置信度转人工的阈值是多少？', expect: ['0.6'] },
+  { q: '北极星用什么模型做分类？', expect: ['线性'] },
+  { q: '山海交付的验收标准是什么？', expect: ['误报'] },
+  { q: '潮汐灰度扩到多少？', expect: ['50'] },
+  { q: '分流服务用什么框架？', expect: ['FastAPI'] },
+  { q: '知识库有多少篇？', expect: ['260'] },
+  { q: '工单样本有多少条？', expect: ['18,400'] },
+  { q: '现场样本有多少段？', expect: ['31,200'] },
+  { q: '申诉样本有多少条？', expect: ['1,200'] },
+  { q: '哪个项目有放弃的尝试？', expect: ['放弃'] },
+  { q: '试点覆盖几个点位？', expect: ['11'] },
+  { q: '边缘推理单帧耗时多少？', expect: ['11ms'] },
+  { q: '上线后首响从多少降到多少？', expect: ['4.2', '1.9'] },
 ];
 
 (async () => {
@@ -43,19 +41,15 @@ const CASES = [
     const c = CASES[i];
     const t0 = Date.now();
     const r = await qa.ask(c.q);
-    const dt = Date.now() - t0;
-    ms += dt;
+    ms += Date.now() - t0;
     const ans = r.answer || '';
     const hit = c.expect.every((k) => ans.includes(k));
     const cites = (r.citations || []).map((x) => x.file);
     let cHit = null;
     if (c.cite) { citeNeed++; cHit = cites.includes(c.cite); if (cHit) citeOk++; }
     if (hit) ok++;
-    console.log(
-      `${String(i + 1).padStart(2)}. ${hit ? '✅' : '❌'} ${c.q}` +
-      (c.cite ? `   [引用 ${cHit ? '✅' : '❌'} ${c.cite}]` : '') + `   ${dt}ms`
-    );
-    if (!hit) console.log('     答案: ' + ans.replace(/\n/g, ' ').slice(0, 90));
+    console.log(`${String(i + 1).padStart(2)}. ${hit ? '✅' : '❌'} ${c.q}` + (c.cite ? `  [引用${cHit ? '✅' : '❌'}]` : ''));
+    if (!hit) console.log('     ' + ans.replace(/\n/g, ' ').slice(0, 80));
   }
   console.log('─'.repeat(78));
   console.log(`命中 ${ok}/${CASES.length} = ${(ok / CASES.length * 100).toFixed(0)}%`);

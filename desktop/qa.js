@@ -326,7 +326,12 @@ function askLocal(question) {
   if (details.length > 1) {
     lines.push(`**相关**：${details.slice(1).map((d) => d.title).join('、')}`);
   }
-  if (!citations.length) lines.push('', '（这条没有原文，结论来自粘贴录入）');
+  if (citations.length) {
+    const c0 = citations[0];
+    if (c0.excerpt) lines.push('', '原文：' + String(c0.excerpt).replace(/\s+/g, ' ').slice(0, 80));
+  } else {
+    lines.push('', '（这条没有原文，结论来自粘贴录入）');
+  }
 
   return { answer: lines.join('\n'), citations: dedupeCitations(citations), trace, mode: 'local', project: scope };
 }
