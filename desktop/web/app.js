@@ -104,7 +104,11 @@ function rebuild() {
     }
   });
 
-  const trunk = vn.filter((n) => (TRUNK_TYPES.has(n.type) || (n.type === 'plan' && !n.parent)) && (n.branch || 'main') === 'main')
+  const hasKid = (n) => vn.some((x) => {
+    const ps = (x.parents && x.parents.length) ? x.parents : (x.parent ? [x.parent] : []);
+    return ps.includes(n.id);
+  });
+  const trunk = vn.filter((n) => (TRUNK_TYPES.has(n.type) || ((n.type === 'plan' || n.type === 'retro') && (!n.parent || hasKid(n)))) && (n.branch || 'main') === 'main')
     .sort((a, b) => msOf(a.content_at) - msOf(b.content_at));
   const trunkSet = new Set(trunk.map((n) => n.id));
 
